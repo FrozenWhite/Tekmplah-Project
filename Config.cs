@@ -1,12 +1,11 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.Windows.Forms;
+﻿using System.Runtime.InteropServices;
 
 namespace Teknomli
 {
     public partial class Config : Form
     {
+        [DllImport("YukiLib.dll")]
+        public static extern void Play(float frequency, int millisecond, int toneType);
         public Config()
         {
             InitializeComponent();
@@ -22,6 +21,7 @@ namespace Teknomli
 
         private void Config_Load(object sender, EventArgs e)
         {
+
         }
     }
 }

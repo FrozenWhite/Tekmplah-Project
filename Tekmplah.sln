@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teknomli", "Teknomli.csproj", "{D9D77892-AB06-4470-AD2F-9879B28BC94A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Teknomli", "Teknomli.csproj", "{D9D77892-AB06-4470-AD2F-9879B28BC94A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,7 +19,8 @@ Global
 		{D9D77892-AB06-4470-AD2F-9879B28BC94A}.Debug|x86.Build.0 = Debug|x86
 		{D9D77892-AB06-4470-AD2F-9879B28BC94A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9D77892-AB06-4470-AD2F-9879B28BC94A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D9D77892-AB06-4470-AD2F-9879B28BC94A}.Release|x86.ActiveCfg = Release|Any CPU
+		{D9D77892-AB06-4470-AD2F-9879B28BC94A}.Release|x86.ActiveCfg = Release|x86
+		{D9D77892-AB06-4470-AD2F-9879B28BC94A}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

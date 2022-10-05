@@ -136,7 +136,13 @@
   <data name="bre" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\bre.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="bre1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\bre.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="brs" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\brs.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="brs1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\brs.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="bsl" type="System.Resources.ResXFileRef, System.Windows.Forms">

@@ -18,15 +18,15 @@ namespace Teknomli
         /// <summary>
         /// 関数名
         /// </summary>
-        public string ProcName { get; set; }
+        public string? ProcName { get; set; }
         /// <summary>
         /// DLLファイル
         /// </summary>
-        public string ModuleFile { get; set; }
+        public string? ModuleFile { get; set; }
         /// <summary>
         /// エントリポイント
         /// </summary>
-        public string EntryPoint { get; set; }
+        public string? EntryPoint { get; set; }
         /// <summary>
         /// 戻り値の型（戻り値無しはSystem.Void）
         /// </summary>

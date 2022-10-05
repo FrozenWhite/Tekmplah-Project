@@ -233,9 +233,29 @@ namespace Teknomli.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap bre1 {
+            get {
+                object obj = ResourceManager.GetObject("bre1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap brs {
             get {
                 object obj = ResourceManager.GetObject("brs", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap brs1 {
+            get {
+                object obj = ResourceManager.GetObject("brs1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
