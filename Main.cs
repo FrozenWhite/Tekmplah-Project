@@ -124,7 +124,7 @@ namespace Teknomli
         /// <summary>
         /// カーソルを点滅させる用
         /// </summary>
-        private System.Timers.Timer? _cursorFlash;
+        private Timer? _cursorFlash;
 
         /// <summary>
         /// コンソール画面かどうか
@@ -180,7 +180,7 @@ namespace Teknomli
                 methodBuilder.SetImplementationFlags(MethodImplAttributes.PreserveSig);
             }
 
-            return typBld.CreateType()?.GetMethod(invInfo.ProcName);
+            return typBld.CreateType()?.GetMethod(invInfo.ProcName ?? "");
         }
         #endregion
         #region コンストラクタ
@@ -236,19 +236,17 @@ namespace Teknomli
                 ProcName = "Play",
                 EntryPoint = "Play",
                 ModuleFile = "YukiLib.dll",
-                ReturnType = typeof(Int32),
-                ParameterTypes = new[] { typeof(float), typeof(int), typeof(int) },
+                ReturnType = typeof(void),
+                // frq,volume,playtime,type
+                ParameterTypes = new[] { typeof(float), typeof(int), typeof(int), typeof(int) },
                 CallingConvention = CallingConvention.StdCall,
                 CharSet = CharSet.Unicode
             };
-            var tmp = Stopwatch.StartNew();
-            await Task.Run(() => Thread.Sleep(10));
-            tmp.Stop();
-            Debug.WriteLine(tmp.ElapsedMilliseconds);
             //Invokeで実行
             Audio = CreateMethodInfo(invInfo);
-            await Task.Run(() => Thread.Sleep(100));
-            Audio?.Invoke(null, new object[] { 2000,100,7 });
+            Audio?.Invoke(null, new object[] { 2000, 100, 100, 7 });
+            await Task.Run(() => Thread.Sleep(90));
+            Audio?.Invoke(null, new object[] { 1000, 100, 100, 7 });
             await MemoryCheck();
             Echo("memory check OK"); NewLine();
             await CheckHeader();
@@ -390,7 +388,7 @@ namespace Teknomli
         {
             //起動音
             Echo("Version Teknomli x4 Basic"); NewLine();
-            Echo("Copyright 2022 FallWhite Team"); NewLine();
+            Echo("Copyright 2022 FrozenWhite"); NewLine();
             //ファイルを開く
             Echo("checking 8bytes"); NewLine();
             Echo("Load 1st"); NewLine();
@@ -498,6 +496,24 @@ namespace Teknomli
                             strValue = strValue.Remove(strValue.IndexOf(")", StringComparison.Ordinal));
                             Debug.WriteLine(strValue);
                             break;
+                        case "circle":
+                            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                            int width = 50;
+                            int height = 50;
+                            for (int x = 0; x < width; x++)
+                            {
+                                for (int y = 0; y < height; y++)
+                                {
+                                    if ((x - width / 2) * (x - width / 2) + (y - height / 2) * (y - height / 2) <= (width / 2) * (height / 2))
+                                    {
+                                        BitmapDataEx.SetPixel(render1bmpdat, x, y, Color.FromArgb(255,255,255,255));
+                                    }
+                                }
+                            }
+                            _render1Bmp.UnlockBits(render1bmpdat);
+                            _render1Bmp.MakeTransparent(Color.Black);
+                            render1.Image = _render1Bmp;
+                            break;
                     }
                     break;
                 case "clean":
@@ -579,8 +595,8 @@ namespace Teknomli
                     {
                         for (int y = 0; y < 16; y++)
                         {
-                            Color circleblu = BitmapDataEx.GetPixel(cirblue, bluecircleData, x, y);
-                            Color circlered = BitmapDataEx.GetPixel(cirred, redcircleData, x, y);
+                            Color circleblu = BitmapDataEx.GetPixel(bluecircleData, x, y);
+                            Color circlered = BitmapDataEx.GetPixel(redcircleData, x, y);
                             if (circleblu != Color.FromArgb(255, 0, 0, 0))
                             {
                                 float xl = (float)(Math.Cos(Math.PI * 2 / 360 * i) * (n) + pt.X + x);
@@ -588,18 +604,18 @@ namespace Teknomli
                                 if (del)
                                 {
                                     if (isred)
-                                        BitmapDataEx.SetPixel(_render1Bmp, render1bmpdat, (int)xl, (int)yl, Color.FromArgb(0));
+                                        BitmapDataEx.SetPixel(render1bmpdat, (int)xl, (int)yl, Color.FromArgb(0));
                                     else
-                                        BitmapDataEx.SetPixel(_backbmp, backbmpdat, (int)xl, (int)yl, Color.FromArgb(0));
+                                        BitmapDataEx.SetPixel(backbmpdat, (int)xl, (int)yl, Color.FromArgb(0));
                                 }
                                 else
                                 {
                                     if (circleblu != Color.FromArgb(255, 0, 0, 0))
                                     {
                                         if (isred)
-                                            BitmapDataEx.SetPixel(_render1Bmp, render1bmpdat, (int)xl, (int)yl, circlered);
+                                            BitmapDataEx.SetPixel(render1bmpdat, (int)xl, (int)yl, circlered);
                                         else
-                                            BitmapDataEx.SetPixel(_backbmp, backbmpdat, (int)xl, (int)yl, circleblu);
+                                            BitmapDataEx.SetPixel(backbmpdat, (int)xl, (int)yl, circleblu);
                                     }
                                 }
                             }
@@ -787,7 +803,7 @@ namespace Teknomli
                         {
                             for (var y = 0; y < LetterHeight; y++)
                             {
-                                BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _lineLetterCount) + 2, y + (LetterHeight * _outputLineCount), backColor);
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _lineLetterCount) + 2, y + (LetterHeight * _outputLineCount), backColor);
                             }
                         }
                         _lineLetterCount++;
@@ -810,9 +826,9 @@ namespace Teknomli
                         {
                             for (var y = 0; y < LetterHeight; y++)
                             {
-                                BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _lineLetterCount),
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _lineLetterCount),
                                     y + (LetterHeight * _outputLineCount),
-                                    BitmapDataEx.GetPixel(letterbmp, fontdata, x, y) != Color.FromArgb(255, 0, 0, 0)
+                                    BitmapDataEx.GetPixel(fontdata, x, y) != Color.FromArgb(255, 0, 0, 0)
                                         ? LetterColor
                                         : backColor);
                             }
@@ -874,7 +890,7 @@ namespace Teknomli
                         {
                             for (int y = 0; y < LetterHeight; y++)
                             {
-                                BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.FromArgb(0));
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.FromArgb(0));
                             }
                         }
                     }
@@ -890,13 +906,13 @@ namespace Teknomli
                         {
                             for (int y = 0; y < LetterHeight; y++)
                             {
-                                if (BitmapDataEx.GetPixel(letterbmp, fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
+                                if (BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
                                 {
-                                    BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
+                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
                                 }
                                 else
                                 {
-                                    BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
+                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
                                 }
                             }
                         }
@@ -1100,7 +1116,8 @@ namespace Teknomli
                             _cursorPosition++;
                             break;
                         case Keys.Enter:
-                            RunCommand(_defaultInput);
+                            if (_defaultInput != "")
+                                RunCommand(_defaultInput);
                             NewLine();
                             break;
                         case Keys.Control:
@@ -1321,7 +1338,8 @@ namespace Teknomli
                             _cursorPosition++;
                             break;
                         case Keys.Enter:
-                            RunCommand(_defaultInput);
+                            if (_defaultInput != "")
+                                RunCommand(_defaultInput);
                             NewLine();
                             break;
                         case Keys.Control:
@@ -1385,7 +1403,7 @@ namespace Teknomli
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + ((LetterHeight) * _outputLineCount), Color.White);
+                            BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + ((LetterHeight) * _outputLineCount), Color.White);
                         }
                     }
                     _isFlashed = true;
@@ -1396,7 +1414,7 @@ namespace Teknomli
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + ((LetterHeight) * _outputLineCount), Color.Black);
+                            BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + ((LetterHeight) * _outputLineCount), Color.Black);
                         }
                     }
                     _isFlashed = false;
@@ -1416,13 +1434,13 @@ namespace Teknomli
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            if (BitmapDataEx.GetPixel(letterbmp, fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
+                            if (BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
                             {
-                                BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
                             }
                             else
                             {
-                                BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
                             }
                         }
                     }
@@ -1434,13 +1452,13 @@ namespace Teknomli
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            if (BitmapDataEx.GetPixel(letterbmp, fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
+                            if (BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
                             {
-                                BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
                             }
                             else
                             {
-                                BitmapDataEx.SetPixel(_backbmp, backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
                             }
                         }
                     }
