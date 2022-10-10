@@ -1,11 +1,7 @@
-﻿using System.Runtime.InteropServices;
-
-namespace Teknomli
+﻿namespace Teknomli
 {
     public partial class Config : Form
     {
-        [DllImport("YukiLib.dll")]
-        public static extern void Play(float frequency, int millisecond, int toneType);
         public Config()
         {
             InitializeComponent();

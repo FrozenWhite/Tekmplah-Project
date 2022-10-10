@@ -1,4 +1,4 @@
-﻿// (c) Team FrozenWhite
+﻿// Created by FrozenWhite
 using System.Reflection.Emit;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -6,6 +6,7 @@ using System.Timers;
 using System.Diagnostics;
 using System.Text;
 using System.Drawing.Imaging;
+using Teknomli.Properties;
 using Timer = System.Timers.Timer;
 
 namespace Teknomli
@@ -31,15 +32,10 @@ namespace Teknomli
         Back       (背景)    ============ <- 背景とか
 
         音源ボード
-        一応C++から移植してるけど無理だったらライブラリになります
+        YukiLibっていうライブラリになりました
 
-        render1.Parent = render2;
-        render2.Parent = render3;
-        render3.Parent = back;
-        render1.Dock = DockStyle.Fill;
-        render2.Dock = DockStyle.Fill;
-        render3.Dock = DockStyle.Fill;
-        back.Dock = DockStyle.Fill;
+        というか設定上って言う感じもの多くね？()
+
         */
         #endregion
         #region 定数
@@ -134,9 +130,9 @@ namespace Teknomli
         /// <summary>
         /// フォントセット
         /// </summary>
-        private Dictionary<string, Bitmap>? _fonts;
+        private BitmapData[] _fonts;
 
-        private MethodInfo? Audio;
+        private MethodInfo? _audio1;
 
         private List<string>? _outputedLetters;
         #endregion
@@ -243,10 +239,10 @@ namespace Teknomli
                 CharSet = CharSet.Unicode
             };
             //Invokeで実行
-            Audio = CreateMethodInfo(invInfo);
-            Audio?.Invoke(null, new object[] { 2000, 100, 100, 7 });
+            _audio1 = CreateMethodInfo(invInfo);
+            _audio1?.Invoke(null, new object[] { 2000, 100, 100, 7 });
             await Task.Run(() => Thread.Sleep(90));
-            Audio?.Invoke(null, new object[] { 1000, 100, 100, 7 });
+            _audio1?.Invoke(null, new object[] { 1000, 100, 100, 7 });
             await MemoryCheck();
             Echo("memory check OK"); NewLine();
             await CheckHeader();
@@ -264,16 +260,113 @@ namespace Teknomli
                 Marshal.WriteByte(mem, memchki, Convert.ToByte(255));
                 if (sw.ElapsedMilliseconds >= 10)
                 {
+                    //Bitmapを作成
+                    _backbmp = new Bitmap(back.Width, back.Height);
+                    //セット
+                    back.Image = _backbmp;
                     Echo($"MEMORY {memchki / 1000}KB OK");
+                    templlc = 0;
                     _lineLetterCount = 0;
                     _defaultOutput = "";
                     sw.Restart();
                     await Task.Run(() => Thread.Sleep(1));
                 }
             }
+
             sw.Stop();
             Echo($"MEMORY {memchki / 1000}KB OK");
             NewLine();
+        }
+
+        private void UnLoadDefaultFonts()
+        {
+            fonts._0.UnlockBits(_fonts[0]);
+            fonts._1.UnlockBits(_fonts[1]);
+            fonts._2.UnlockBits(_fonts[2]);
+            fonts._3.UnlockBits(_fonts[3]);
+            fonts._4.UnlockBits(_fonts[4]);
+            fonts._5.UnlockBits(_fonts[5]);
+            fonts._6.UnlockBits(_fonts[6]);
+            fonts._7.UnlockBits(_fonts[7]);
+            fonts._8.UnlockBits(_fonts[8]);
+            fonts._9.UnlockBits(_fonts[9]);
+            fonts.A.UnlockBits(_fonts[10]);
+            fonts.B.UnlockBits(_fonts[11]);
+            fonts.C.UnlockBits(_fonts[12]);
+            fonts.D.UnlockBits(_fonts[13]);
+            fonts.E.UnlockBits(_fonts[14]);
+            fonts.F.UnlockBits(_fonts[15]);
+            fonts.G.UnlockBits(_fonts[16]);
+            fonts.H.UnlockBits(_fonts[17]);
+            fonts.I.UnlockBits(_fonts[18]);
+            fonts.J.UnlockBits(_fonts[19]);
+            fonts.K.UnlockBits(_fonts[20]);
+            fonts.L.UnlockBits(_fonts[21]);
+            fonts.M.UnlockBits(_fonts[22]);
+            fonts.N.UnlockBits(_fonts[23]);
+            fonts.O.UnlockBits(_fonts[24]);
+            fonts.P.UnlockBits(_fonts[25]);
+            fonts.Q.UnlockBits(_fonts[26]);
+            fonts.R.UnlockBits(_fonts[27]);
+            fonts.S.UnlockBits(_fonts[28]);
+            fonts.T.UnlockBits(_fonts[29]);
+            fonts.U.UnlockBits(_fonts[30]);
+            fonts.V.UnlockBits(_fonts[31]);
+            fonts.W.UnlockBits(_fonts[32]);
+            fonts.X.UnlockBits(_fonts[33]);
+            fonts.Y.UnlockBits(_fonts[34]);
+            fonts.Z.UnlockBits(_fonts[35]);
+            fonts.a_s.UnlockBits(_fonts[36]);
+            fonts.b_s.UnlockBits(_fonts[37]);
+            fonts.c_s.UnlockBits(_fonts[38]);
+            fonts.d_s.UnlockBits(_fonts[39]);
+            fonts.e_s.UnlockBits(_fonts[40]);
+            fonts.f_s.UnlockBits(_fonts[41]);
+            fonts.g_s.UnlockBits(_fonts[42]);
+            fonts.h_s.UnlockBits(_fonts[43]);
+            fonts.i_s.UnlockBits(_fonts[44]);
+            fonts.j_s.UnlockBits(_fonts[45]);
+            fonts.k_s.UnlockBits(_fonts[46]);
+            fonts.l_s.UnlockBits(_fonts[47]);
+            fonts.m_s.UnlockBits(_fonts[48]);
+            fonts.n_s.UnlockBits(_fonts[49]);
+            fonts.o_s.UnlockBits(_fonts[50]);
+            fonts.p_s.UnlockBits(_fonts[51]);
+            fonts.q_s.UnlockBits(_fonts[52]);
+            fonts.r_s.UnlockBits(_fonts[53]);
+            fonts.s_s.UnlockBits(_fonts[54]);
+            fonts.t_s.UnlockBits(_fonts[55]);
+            fonts.u_s.UnlockBits(_fonts[56]);
+            fonts.v_s.UnlockBits(_fonts[57]);
+            fonts.w_s.UnlockBits(_fonts[58]);
+            fonts.x_s.UnlockBits(_fonts[59]);
+            fonts.y_s.UnlockBits(_fonts[60]);
+            fonts.z_s.UnlockBits(_fonts[61]);
+            fonts.que.UnlockBits(_fonts[62]);
+            fonts.exc.UnlockBits(_fonts[63]);
+            fonts.quo.UnlockBits(_fonts[64]);
+            fonts.has.UnlockBits(_fonts[65]);
+            fonts.dol.UnlockBits(_fonts[66]);
+            fonts.per.UnlockBits(_fonts[67]);
+            fonts.and.UnlockBits(_fonts[68]);
+            fonts.sin.UnlockBits(_fonts[69]);
+            fonts.brs.UnlockBits(_fonts[70]);
+            fonts.bre.UnlockBits(_fonts[71]);
+            fonts.bkt.UnlockBits(_fonts[72]);
+            fonts.bsl.UnlockBits(_fonts[73]);
+            fonts.cbs.UnlockBits(_fonts[74]);
+            fonts.cbe.UnlockBits(_fonts[75]);
+            fonts.sla.UnlockBits(_fonts[76]);
+            fonts.plu.UnlockBits(_fonts[77]);
+            fonts.min.UnlockBits(_fonts[78]);
+            fonts.ast.UnlockBits(_fonts[79]);
+            fonts.dot.UnlockBits(_fonts[80]);
+            fonts.com.UnlockBits(_fonts[81]);
+            fonts.spa.UnlockBits(_fonts[82]);
+            fonts.gre.UnlockBits(_fonts[83]);
+            fonts.les.UnlockBits(_fonts[84]);
+            fonts.equ.UnlockBits(_fonts[85]);
+            fonts.sai.UnlockBits(_fonts[86]);
         }
 
         /// <summary>
@@ -281,103 +374,128 @@ namespace Teknomli
         /// </summary>
         private void LoadDefaultFonts()
         {
-            _fonts = new Dictionary<string, Bitmap>
+            _fonts = new[]
             {
-                //Number
-                { "0", Properties.fonts._0 },
-                { "1", Properties.fonts._1 },
-                { "2", Properties.fonts._2 },
-                { "3", Properties.fonts._3 },
-                { "4", Properties.fonts._4 },
-                { "5", Properties.fonts._5 },
-                { "6", Properties.fonts._6 },
-                { "7", Properties.fonts._7 },
-                { "8", Properties.fonts._8 },
-                { "9", Properties.fonts._9 },
-                //Large Alphabet
-                { "A", Properties.fonts.A },
-                { "B", Properties.fonts.B },
-                { "C", Properties.fonts.C },
-                { "D", Properties.fonts.D },
-                { "E", Properties.fonts.E },
-                { "F", Properties.fonts.F },
-                { "G", Properties.fonts.G },
-                { "H", Properties.fonts.H },
-                { "I", Properties.fonts.I },
-                { "J", Properties.fonts.J },
-                { "K", Properties.fonts.K },
-                { "L", Properties.fonts.L },
-                { "M", Properties.fonts.M },
-                { "N", Properties.fonts.N },
-                { "O", Properties.fonts.O },
-                { "P", Properties.fonts.P },
-                { "Q", Properties.fonts.Q },
-                { "R", Properties.fonts.R },
-                { "S", Properties.fonts.S },
-                { "T", Properties.fonts.T },
-                { "U", Properties.fonts.U },
-                { "V", Properties.fonts.V },
-                { "W", Properties.fonts.W },
-                { "X", Properties.fonts.X },
-                { "Y", Properties.fonts.Y },
-                { "Z", Properties.fonts.Z },
-                //Small Alphabet
-                { "a", Properties.fonts.a_s },
-                { "b", Properties.fonts.b_s },
-                { "c", Properties.fonts.c_s },
-                { "d", Properties.fonts.d_s },
-                { "e", Properties.fonts.e_s },
-                { "f", Properties.fonts.f_s },
-                { "g", Properties.fonts.g_s },
-                { "h", Properties.fonts.h_s },
-                { "i", Properties.fonts.i_s },
-                { "j", Properties.fonts.j_s },
-                { "k", Properties.fonts.k_s },
-                { "l", Properties.fonts.l_s },
-                { "m", Properties.fonts.m_s },
-                { "n", Properties.fonts.n_s },
-                { "o", Properties.fonts.o_s },
-                { "p", Properties.fonts.p_s },
-                { "q", Properties.fonts.q_s },
-                { "r", Properties.fonts.r_s },
-                { "s", Properties.fonts.s_s },
-                { "t", Properties.fonts.t_s },
-                { "u", Properties.fonts.u_s },
-                { "v", Properties.fonts.v_s },
-                { "w", Properties.fonts.w_s },
-                { "x", Properties.fonts.x_s },
-                { "y", Properties.fonts.y_s },
-                { "z", Properties.fonts.z_s },
-                //!
-                { "exc", Properties.fonts.exc },
-                //"
-                { "quo", Properties.fonts.quo },
-                //#
-                { "has", Properties.fonts.has },
-                //$
-                { "dol", Properties.fonts.dol },
-                //%
-                { "per", Properties.fonts.per },
-                //&
-                { "and", Properties.fonts.and },
-                //'
-                { "sin", Properties.fonts.sin },
-                //(
-                { "brs", Properties.fonts.brs },
-                //)
-                { "bre", Properties.fonts.bre },
-                //<
-                { "gre", Properties.fonts.gre },
-                //>
-                { "les", Properties.fonts.les },
-                //<
-                { "cbs", Properties.fonts.cbs },
-                //>
-                { "cbe", Properties.fonts.cbe },
-                //?
-                { "que", Properties.fonts.que },
-                // (space)
-                { "spa", Properties.fonts.spa }
+                #region Number
+                fonts._0.LockBits(new Rectangle(0, 0, fonts._0.Width, fonts._0.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._1.LockBits(new Rectangle(0, 0, fonts._1.Width, fonts._1.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._2.LockBits(new Rectangle(0, 0, fonts._2.Width, fonts._2.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._3.LockBits(new Rectangle(0, 0, fonts._3.Width, fonts._3.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._4.LockBits(new Rectangle(0, 0, fonts._4.Width, fonts._4.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._5.LockBits(new Rectangle(0, 0, fonts._5.Width, fonts._5.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._6.LockBits(new Rectangle(0, 0, fonts._6.Width, fonts._6.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._7.LockBits(new Rectangle(0, 0, fonts._7.Width, fonts._7.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._8.LockBits(new Rectangle(0, 0, fonts._8.Width, fonts._8.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts._9.LockBits(new Rectangle(0, 0, fonts._9.Width, fonts._9.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                #endregion
+                #region Alphabet
+                fonts.A.LockBits(new Rectangle(0, 0, fonts.A.Width, fonts.A.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.B.LockBits(new Rectangle(0, 0, fonts.B.Width, fonts.B.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.C.LockBits(new Rectangle(0, 0, fonts.C.Width, fonts.C.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.D.LockBits(new Rectangle(0, 0, fonts.D.Width, fonts.D.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.E.LockBits(new Rectangle(0, 0, fonts.E.Width, fonts.E.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.F.LockBits(new Rectangle(0, 0, fonts.F.Width, fonts.F.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.G.LockBits(new Rectangle(0, 0, fonts.G.Width, fonts.G.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.H.LockBits(new Rectangle(0, 0, fonts.H.Width, fonts.H.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.I.LockBits(new Rectangle(0, 0, fonts.I.Width, fonts.I.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.J.LockBits(new Rectangle(0, 0, fonts.J.Width, fonts.J.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.K.LockBits(new Rectangle(0, 0, fonts.K.Width, fonts.K.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.L.LockBits(new Rectangle(0, 0, fonts.L.Width, fonts.L.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.M.LockBits(new Rectangle(0, 0, fonts.M.Width, fonts.M.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.N.LockBits(new Rectangle(0, 0, fonts.N.Width, fonts.N.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.O.LockBits(new Rectangle(0, 0, fonts.O.Width, fonts.O.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.P.LockBits(new Rectangle(0, 0, fonts.P.Width, fonts.P.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.Q.LockBits(new Rectangle(0, 0, fonts.Q.Width, fonts.Q.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.R.LockBits(new Rectangle(0, 0, fonts.R.Width, fonts.R.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.S.LockBits(new Rectangle(0, 0, fonts.S.Width, fonts.S.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.T.LockBits(new Rectangle(0, 0, fonts.T.Width, fonts.T.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.U.LockBits(new Rectangle(0, 0, fonts.U.Width, fonts.U.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.V.LockBits(new Rectangle(0, 0, fonts.V.Width, fonts.V.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.W.LockBits(new Rectangle(0, 0, fonts.W.Width, fonts.W.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.X.LockBits(new Rectangle(0, 0, fonts.X.Width, fonts.X.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.Y.LockBits(new Rectangle(0, 0, fonts.Y.Width, fonts.Y.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.Z.LockBits(new Rectangle(0, 0, fonts.Z.Width, fonts.Z.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                #endregion
+                #region Small Alphabet
+                fonts.a_s.LockBits(new Rectangle(0, 0, fonts.a_s.Width, fonts.a_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.b_s.LockBits(new Rectangle(0, 0, fonts.b_s.Width, fonts.b_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.c_s.LockBits(new Rectangle(0, 0, fonts.c_s.Width, fonts.c_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.d_s.LockBits(new Rectangle(0, 0, fonts.d_s.Width, fonts.d_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.e_s.LockBits(new Rectangle(0, 0, fonts.e_s.Width, fonts.e_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.f_s.LockBits(new Rectangle(0, 0, fonts.f_s.Width, fonts.f_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.g_s.LockBits(new Rectangle(0, 0, fonts.g_s.Width, fonts.g_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.h_s.LockBits(new Rectangle(0, 0, fonts.h_s.Width, fonts.h_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.i_s.LockBits(new Rectangle(0, 0, fonts.i_s.Width, fonts.i_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.j_s.LockBits(new Rectangle(0, 0, fonts.j_s.Width, fonts.j_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.k_s.LockBits(new Rectangle(0, 0, fonts.k_s.Width, fonts.k_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.l_s.LockBits(new Rectangle(0, 0, fonts.l_s.Width, fonts.l_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.m_s.LockBits(new Rectangle(0, 0, fonts.m_s.Width, fonts.m_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.n_s.LockBits(new Rectangle(0, 0, fonts.n_s.Width, fonts.n_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.o_s.LockBits(new Rectangle(0, 0, fonts.o_s.Width, fonts.o_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.p_s.LockBits(new Rectangle(0, 0, fonts.p_s.Width, fonts.p_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.q_s.LockBits(new Rectangle(0, 0, fonts.q_s.Width, fonts.q_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.r_s.LockBits(new Rectangle(0, 0, fonts.r_s.Width, fonts.r_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.s_s.LockBits(new Rectangle(0, 0, fonts.s_s.Width, fonts.s_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.t_s.LockBits(new Rectangle(0, 0, fonts.t_s.Width, fonts.t_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.u_s.LockBits(new Rectangle(0, 0, fonts.u_s.Width, fonts.u_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.v_s.LockBits(new Rectangle(0, 0, fonts.v_s.Width, fonts.v_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.w_s.LockBits(new Rectangle(0, 0, fonts.w_s.Width, fonts.w_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.x_s.LockBits(new Rectangle(0, 0, fonts.x_s.Width, fonts.x_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.y_s.LockBits(new Rectangle(0, 0, fonts.y_s.Width, fonts.y_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.z_s.LockBits(new Rectangle(0, 0, fonts.z_s.Width, fonts.z_s.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                #endregion
+                #region symbol
+                // ?
+                fonts.que.LockBits(new Rectangle(0, 0, fonts.que.Width, fonts.que.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // !
+                fonts.exc.LockBits(new Rectangle(0, 0, fonts.exc.Width, fonts.exc.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // "
+                fonts.quo.LockBits(new Rectangle(0, 0, fonts.quo.Width, fonts.quo.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // #
+                fonts.has.LockBits(new Rectangle(0, 0, fonts.has.Width, fonts.has.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // $
+                fonts.dol.LockBits(new Rectangle(0, 0, fonts.dol.Width, fonts.dol.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // %
+                fonts.per.LockBits(new Rectangle(0, 0, fonts.per.Width, fonts.per.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // &
+                fonts.and.LockBits(new Rectangle(0, 0, fonts.and.Width, fonts.and.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // '
+                fonts.sin.LockBits(new Rectangle(0, 0, fonts.sin.Width, fonts.sin.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // (
+                fonts.brs.LockBits(new Rectangle(0, 0, fonts.brs.Width, fonts.brs.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // )
+                fonts.bre.LockBits(new Rectangle(0, 0, fonts.bre.Width, fonts.bre.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // `
+                fonts.bkt.LockBits(new Rectangle(0, 0, fonts.bkt.Width, fonts.bkt.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // \
+                fonts.bsl.LockBits(new Rectangle(0, 0, fonts.bsl.Width, fonts.bsl.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // {
+                fonts.cbs.LockBits(new Rectangle(0, 0, fonts.cbs.Width, fonts.cbs.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // }
+                fonts.cbe.LockBits(new Rectangle(0, 0, fonts.cbe.Width, fonts.cbe.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // /
+                fonts.sla.LockBits(new Rectangle(0, 0, fonts.sla.Width, fonts.sla.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // +
+                fonts.plu.LockBits(new Rectangle(0, 0, fonts.plu.Width, fonts.plu.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // -
+                fonts.min.LockBits(new Rectangle(0, 0, fonts.min.Width, fonts.min.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // *
+                fonts.ast.LockBits(new Rectangle(0, 0, fonts.ast.Width, fonts.ast.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // .
+                fonts.dot.LockBits(new Rectangle(0, 0, fonts.dot.Width, fonts.dot.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // ,
+                fonts.com.LockBits(new Rectangle(0, 0, fonts.com.Width, fonts.com.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                //  (space)
+                fonts.spa.LockBits(new Rectangle(0, 0, fonts.spa.Width, fonts.spa.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // >
+                fonts.gre.LockBits(new Rectangle(0, 0, fonts.gre.Width, fonts.gre.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // <
+                fonts.les.LockBits(new Rectangle(0, 0, fonts.les.Width, fonts.les.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // =
+                fonts.equ.LockBits(new Rectangle(0, 0, fonts.gre.Width, fonts.gre.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // 彩
+                fonts.sai.LockBits(new Rectangle(0, 0, fonts.sai.Width, fonts.sai.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+				#endregion
             };
         }
 
@@ -398,12 +516,10 @@ namespace Teknomli
                 int n = 0;
                 for (int i = 0; i < 8; i++)
                 {
-                    if (Encoding.ASCII.GetBytes(cs)[i] == Encoding.ASCII.GetBytes("THISISAPPC;")[i])
-                    {
-                        await Task.Run(() => Thread.Sleep(10));
-                        n++;
-                        Echo("###");
-                    }
+                    if (Encoding.ASCII.GetBytes(cs)[i] != Encoding.ASCII.GetBytes("THISISAPPC;")[i]) continue;
+                    await Task.Run(() => Thread.Sleep(10));
+                    n++;
+                    Echo("###");
                 }
                 NewLine();
                 if (n == 8)
@@ -430,18 +546,16 @@ namespace Teknomli
         /// </summary>
         private void Init()
         {
-
             _outputLineCount = 0;
             _cursorPosition = 0;
-            _defaultOutput = "";
-#if DEBUG
-            Echo("Horai Debug OS v001"); NewLine();
-#else
-            Echo("Horai OS v001"); NewLine();
-#endif
+            _defaultOutput = ""; 
+            Echo("------------------------------------------------------------"); NewLine();
+            Echo("Horai OS 彩"); NewLine();
+            Echo("Copyright (c) 2022 FrozenWhite"); NewLine();
+            Echo("------------------------------------------------------------"); NewLine();
             _isConsole = true;
             //カーソルの点滅
-            _cursorFlash = new System.Timers.Timer(500);
+            _cursorFlash = new Timer(500);
             _cursorFlash.Elapsed += CursorFlash_Elapsed!;
             _cursorFlash.Start();
         }
@@ -464,28 +578,21 @@ namespace Teknomli
         /// <param name="commands">コマンド(例:echo test)</param>
         private async void RunCommand(string commands)
         {
-            string[] cmd = commands.Split(' ');
+            var cmd = commands.Split(' ');
             switch (cmd[0].ToLower())
             {
                 case "run":
-                    RunApplication(cmd[cmd.Length - 1]);
+                    RunApplication(cmd[^1]);
                     break;
                 case "echo":
                     NewLine();
-                    string str = "";
+                    var str = "";
                     for (int i = 1; i < cmd.Length; i++)
                         str += cmd[i] + " ";
-                    Echo(str);
-                    break;
-                case "set":
-                    for (int i = 0; i < 30; i++)
-                    {
-                        drawCircle(new Point(150, 150), i * 20, false, 30, 120);
-                        drawCircle(new Point(350, 150), i * 20, false, /*50, 140 */ 0, 360, true);
-                        await Task.Run(() => Thread.Sleep(1));
-                        drawCircle(new Point(150, 150), i * 20, true/*, 30, 120*/);
-                        drawCircle(new Point(350, 150), i * 20, true,/* 50, 140*/0, 360, true);
-                    }
+                    var rsl = str.Remove(0, str.IndexOf("'", StringComparison.Ordinal) + 1);
+                    rsl = rsl.Remove(rsl.IndexOf("'", StringComparison.Ordinal));
+                    if (rsl.Length <= str.Length)
+                        Echo(rsl);
                     break;
                 case "draw":
                     switch (cmd[1].ToLower())
@@ -497,7 +604,7 @@ namespace Teknomli
                             Debug.WriteLine(strValue);
                             break;
                         case "circle":
-                            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
                             int width = 50;
                             int height = 50;
                             for (int x = 0; x < width; x++)
@@ -506,7 +613,7 @@ namespace Teknomli
                                 {
                                     if ((x - width / 2) * (x - width / 2) + (y - height / 2) * (y - height / 2) <= (width / 2) * (height / 2))
                                     {
-                                        BitmapDataEx.SetPixel(render1bmpdat, x, y, Color.FromArgb(255,255,255,255));
+                                        BitmapDataEx.SetPixel(render1bmpdat, x, y, Color.FromArgb(255, 255, 255, 255));
                                     }
                                 }
                             }
@@ -517,25 +624,7 @@ namespace Teknomli
                     }
                     break;
                 case "clean":
-                    _cursorFlash!.Stop();
-                    _isConsole = false;
-                    _lineLetterCount = 0;
-                    _outputLineCount = -1;
-                    _cursorPosition = 0;
-                    _defaultInput = "";
-                    _defaultOutput = "";
-                    //Bitmapを作成
-                    _backbmp = new Bitmap(back.Width, back.Height);
-                    _render1Bmp = new Bitmap(render1.Width, render1.Height);
-                    _render2Bmp = new Bitmap(render2.Width, render2.Height);
-                    _render3Bmp = new Bitmap(render3.Width, render3.Height);
-                    //セット
-                    back.Image = _backbmp;
-                    render1.Image = _render1Bmp;
-                    render2.Image = _render2Bmp;
-                    render3.Image = _render3Bmp;
-                    _isConsole = true;
-                    _cursorFlash.Start();
+                    CleanScreen();
                     break;
                 default:
                     NewLine();
@@ -552,6 +641,31 @@ namespace Teknomli
         private void reset()
         {
 
+        }
+
+        private void CleanScreen()
+        {
+            if (_cursorFlash != null)
+                _cursorFlash.Stop();
+            _isConsole = false;
+            _lineLetterCount = 0;
+            _outputLineCount = -1;
+            _cursorPosition = 0;
+            _defaultInput = "";
+            _defaultOutput = "";
+            //Bitmapを作成
+            _backbmp = new Bitmap(back.Width, back.Height);
+            _render1Bmp = new Bitmap(render1.Width, render1.Height);
+            _render2Bmp = new Bitmap(render2.Width, render2.Height);
+            _render3Bmp = new Bitmap(render3.Width, render3.Height);
+            //セット
+            back.Image = _backbmp;
+            render1.Image = _render1Bmp;
+            render2.Image = _render2Bmp;
+            render3.Image = _render3Bmp;
+            _isConsole = true;
+            if (_cursorFlash != null)
+                _cursorFlash.Start();
         }
 
         private void SetPixel(Point point, Color color, int layer)
@@ -582,11 +696,11 @@ namespace Teknomli
             _cursorFlash!.Stop();
             Bitmap cirblue = new Bitmap(@"D:\Downloads\circleblue.bmp");
             Bitmap cirred = new Bitmap(@"D:\Downloads\circlered.bmp");
-            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            BitmapData bluecircleData = cirblue.LockBits(new Rectangle(0, 0, cirblue.Width, cirblue.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData redcircleData = cirred.LockBits(new Rectangle(0, 0, cirred.Width, cirred.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bluecircleData = cirblue.LockBits(new Rectangle(0, 0, cirblue.Width, cirblue.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData redcircleData = cirred.LockBits(new Rectangle(0, 0, cirred.Width, cirred.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             for (float i = 0; i < 361; i++)
             {
                 if (i % 10 == 0 && minrad <= i && i <= maxrad)
@@ -636,104 +750,32 @@ namespace Teknomli
 
         #endregion
         #region 描画
-        private static void ReplaceLetters(ref string ltr)
-        {
-            /*
-
-                //%
-                { "per", Properties.fonts.per },
-                //&
-                { "and", Properties.fonts.and },
-                //'
-                { "sin", Properties.fonts.sin },
-                //(
-                { "brs", Properties.fonts.brs },
-                //)
-                { "bre", Properties.fonts.bre },
-                //<
-                { "gre", Properties.fonts.gre },
-                //>
-                { "les", Properties.fonts.les },
-                //<
-                { "cbs", Properties.fonts.cbs },
-                //>
-                { "cbe", Properties.fonts.cbe },
-                //?
-                { "que", Properties.fonts.que },
-                // (space)
-                { "spa", Properties.fonts.spa }
-             */
-            switch (ltr)
-            {
-                case "?":
-                    ltr = "que";
-                    break;
-                case "!":
-                    ltr = "exc";
-                    break;
-                case "\"":
-                    ltr = "quo";
-                    break;
-                case "#":
-                    ltr = "has";
-                    break;
-                case "$":
-                    ltr = "dol";
-                    break;
-                case "%":
-                    ltr = "per";
-                    break;
-                case "&":
-                    ltr = "and";
-                    break;
-                case "'":
-                    ltr = "sin";
-                    break;
-                case "(":
-                    ltr = "brs";
-                    break;
-                case ")":
-                    ltr = "bre";
-                    break;
-                case " ":
-                    ltr = "spa";
-                    break;
-                case ">":
-                    ltr = "gre";
-                    break;
-                case "<":
-                    ltr = "les";
-                    break;
-            }
-        }
 
         private static Bitmap RotateImage(Bitmap bmp, float angle)
         {
-            float alpha = angle;
+            var alpha = angle;
             while (alpha < 0) alpha += 360;
 
-            float gamma = 90;
-            float beta = 180 - angle - gamma;
+            var gamma = 90;
+            var beta = 180 - angle - gamma;
 
             float c1 = bmp.Height;
-            float a1 = (float)(c1 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
-            float b1 = (float)(c1 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+            var a1 = (float)(c1 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+            var b1 = (float)(c1 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
 
             float c2 = bmp.Width;
-            float a2 = (float)(c2 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
-            float b2 = (float)(c2 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+            var a2 = (float)(c2 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+            var b2 = (float)(c2 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
 
-            int width = Convert.ToInt32(b2 + a1);
-            int height = Convert.ToInt32(b1 + a2);
+            var width = Convert.ToInt32(b2 + a1);
+            var height = Convert.ToInt32(b1 + a2);
 
             Bitmap rotatedImage = new Bitmap(width, height);
-            using (Graphics g = Graphics.FromImage(rotatedImage))
-            {
-                g.TranslateTransform(rotatedImage.Width / 2, rotatedImage.Height / 2); //set the rotation point as the center into the matrix
-                g.RotateTransform(angle); //rotate
-                g.TranslateTransform(-rotatedImage.Width / 2, -rotatedImage.Height / 2); //restore rotation point into the matrix
-                g.DrawImage(bmp, new Point((width - bmp.Width) / 2, (height - bmp.Height) / 2)); //draw the image on the new bitmap
-            }
+            using Graphics g = Graphics.FromImage(rotatedImage);
+            g.TranslateTransform(rotatedImage.Width / 2, rotatedImage.Height / 2);
+            g.RotateTransform(angle);
+            g.TranslateTransform(-rotatedImage.Width / 2, -rotatedImage.Height / 2);
+            g.DrawImage(bmp, new Point((width - bmp.Width) / 2, (height - bmp.Height) / 2));
             return rotatedImage;
         }
 
@@ -741,12 +783,11 @@ namespace Teknomli
         /// 指定された文字をコンソールに出力する
         /// </summary>
         /// <param name="str">出力する文字</param>
-        /// <param name="useDefaultFont">本体のROM内蔵のフォントを使うかどうか</param>
-        private void Echo(string str, bool useDefaultFont = true)
+        private void Echo(string str)
         {
             foreach (var chr in str)
             {
-                SetLetter(chr, Color.White, Color.Black, useDefaultFont);
+                SetLetter(chr, Color.White, Color.Black);
                 _cursorPosition++;
             }
         }
@@ -758,42 +799,38 @@ namespace Teknomli
         {
             _outputLineCount++;
             _lineLetterCount = 0;
+            templlc = 0;
+            tempcur = 0;
             _cursorPosition = 0;
             _defaultInput = "";
             _defaultOutput = "";
+            _isTempReturn = false;
         }
 
-        private void RedrawLine(int line)
-        {
-
-        }
-
+        private bool _isTempReturn;
+        private int templlc;
+        private int tempcur;
         /// <summary>
         /// 指定されたcharを出力する
         /// </summary>
         /// <param name="letter">出力するChar</param>
         /// <param name="LetterColor"></param>
-        internal void SetLetter(char letter, Color LetterColor, Color backColor, bool UseDefaultFont = true, string fontPath = "")
+        internal void SetLetter(char letter, Color LetterColor, Color backColor,int lx = -1,int ly = -1)
         {
             _cursorFlash?.Stop();
             //charをstringに変換
             var ltr = letter.ToString();
             _outputedLetters!.Add("");
             _outputedLetters[_outputLineCount] = _outputedLetters[_outputLineCount].Insert(0, ltr);
-            ReplaceLetters(ref ltr);
-
-            var llcbak = _lineLetterCount;
-            var cpbak = _cursorPosition;
-            if (_defaultInput.Length * LetterWidth > _backbmp!.Width - (LetterWidth / 2))
+            //Letter.ReplaceLetters(ref ltr);
+            if (_defaultInput.Length * LetterWidth > _backbmp!.Width - (LetterWidth / 2) && !_isTempReturn)
             {
                 _outputLineCount++;
-                _lineLetterCount = 0;
-                _cursorPosition = 0;
+                templlc = 0;
+                tempcur = 0;
+                _isTempReturn = true;
             }
-
-            if (!_fonts!.ContainsKey(ltr))
-                return;
-            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
             switch (ltr)
             {
                 //空欄だったらそのまま
@@ -803,10 +840,11 @@ namespace Teknomli
                         {
                             for (var y = 0; y < LetterHeight; y++)
                             {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _lineLetterCount) + 2, y + (LetterHeight * _outputLineCount), backColor);
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * templlc) + 2, y + (LetterHeight * _outputLineCount), backColor);
                             }
                         }
                         _lineLetterCount++;
+                        templlc++;
                         break;
                     }
                 //改行は単純に行を増やすだけ
@@ -819,14 +857,13 @@ namespace Teknomli
                 default:
                     {
                         //文字ファイルを読み込み
-                        Bitmap letterbmp = _fonts[ltr];
+                        BitmapData fontdata = _fonts[Letter.ConvertLetterCode(ltr)];
                         //Bitmapを直接操作
-                        BitmapData fontdata = letterbmp.LockBits(new Rectangle(0, 0, letterbmp.Width, letterbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-                        for (var x = 0; x < LetterWidth; x++)
+                        for (var x = 0; x < fontdata.Width; x++)
                         {
-                            for (var y = 0; y < LetterHeight; y++)
+                            for (var y = 0; y < fontdata.Height; y++)
                             {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _lineLetterCount),
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * templlc),
                                     y + (LetterHeight * _outputLineCount),
                                     BitmapDataEx.GetPixel(fontdata, x, y) != Color.FromArgb(255, 0, 0, 0)
                                         ? LetterColor
@@ -834,22 +871,12 @@ namespace Teknomli
                             }
                         }
                         _lineLetterCount++;
-                        //解放
-
-                        letterbmp.UnlockBits(fontdata);
+                        templlc++;
                         break;
                     }
             }
-
             //標準出力に書き込み
             _defaultOutput += letter.ToString();
-            if (_defaultInput.Length * LetterWidth > _backbmp.Width - (LetterWidth / 2))
-            {
-                _outputLineCount--;
-                _lineLetterCount = llcbak;
-                _cursorPosition = cpbak;
-            }
-
             //解放
             _backbmp.UnlockBits(backbmpdat);
             //描画
@@ -867,6 +894,7 @@ namespace Teknomli
         //終了処理をここに記入
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
+            //UnLoadDefaultFonts();
             Marshal.FreeHGlobal(mem);
         }
         #endregion
@@ -882,15 +910,15 @@ namespace Teknomli
                 BitmapData? backbmpdat = null;
                 try
                 {
-                    backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+                    backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
                     //カーソルの削除
-                    if (_lineLetterCount == _cursorPosition || _defaultInput == "")
+                    if (_lineLetterCount == tempcur || _defaultInput == "")
                     {
                         for (int x = 0; x < LetterWidth; x++)
                         {
                             for (int y = 0; y < LetterHeight; y++)
                             {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.FromArgb(0));
+                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * tempcur), y + (LetterHeight * _outputLineCount), Color.FromArgb(0));
                             }
                         }
                     }
@@ -898,26 +926,22 @@ namespace Teknomli
                     {
                         var ltr = _defaultInput[_cursorPosition].ToString();
                         //記号とかを置き換え
-                        ReplaceLetters(ref ltr);
-                        Bitmap letterbmp = _fonts![ltr];
-                        //Bitmapを直接操作
-                        BitmapData fontdata = letterbmp.LockBits(new Rectangle(0, 0, letterbmp.Width, letterbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+                        //Letter.ReplaceLetters(ref ltr);
+                        BitmapData fontdata = _fonts[Letter.ConvertLetterCode(ltr)];
                         for (int x = 0; x < LetterWidth; x++)
                         {
                             for (int y = 0; y < LetterHeight; y++)
                             {
                                 if (BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
                                 {
-                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
+                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * tempcur), y + (LetterHeight * _outputLineCount), Color.White);
                                 }
                                 else
                                 {
-                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
+                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * tempcur), y + (LetterHeight * _outputLineCount), Color.Black);
                                 }
                             }
                         }
-                        if (fontdata != null)
-                            letterbmp.UnlockBits(fontdata);
                     }
                     _isFlashed = false;
                 }
@@ -929,448 +953,58 @@ namespace Teknomli
                         back.Image = _backbmp;
                     }
                 }
-                if (e.Shift)
+                var str = Letter.ConvertKeyCode(e.KeyCode, e.Shift);
+                switch (str)
                 {
-                    switch (e.KeyCode)
-                    {
-                        case Keys.A:
-                            _defaultInput += "A";
-                            SetLetter('A', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.B:
-                            _defaultInput += "B";
-                            SetLetter('B', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.C:
-                            _defaultInput += "C";
-                            SetLetter('C', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D:
-                            _defaultInput += "D";
-                            SetLetter('D', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.E:
-                            _defaultInput += "E";
-                            SetLetter('E', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.F:
-                            _defaultInput += "F";
-                            SetLetter('F', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.G:
-                            _defaultInput += "G";
-                            SetLetter('G', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.H:
-                            _defaultInput += "H";
-                            SetLetter('H', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.I:
-                            _defaultInput += "I";
-                            SetLetter('I', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.J:
-                            _defaultInput += "J";
-                            SetLetter('J', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.K:
-                            _defaultInput += "K";
-                            SetLetter('K', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.L:
-                            _defaultInput += "L";
-                            SetLetter('L', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.M:
-                            _defaultInput += "M";
-                            SetLetter('M', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.N:
-                            _defaultInput += "N";
-                            SetLetter('N', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.O:
-                            _defaultInput += "O";
-                            SetLetter('O', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.P:
-                            _defaultInput += "P";
-                            SetLetter('P', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Q:
-                            _defaultInput += "Q";
-                            SetLetter('Q', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.R:
-                            _defaultInput += "R";
-                            SetLetter('R', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.S:
-                            _defaultInput += "S";
-                            SetLetter('S', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.T:
-                            _defaultInput += "T";
-                            SetLetter('T', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.U:
-                            _defaultInput += "U";
-                            SetLetter('U', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.V:
-                            _defaultInput += "V";
-                            SetLetter('V', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.W:
-                            _defaultInput += "W";
-                            SetLetter('W', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.X:
-                            _defaultInput += "X";
-                            SetLetter('X', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Y:
-                            _defaultInput += "Y";
-                            SetLetter('Y', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Z:
-                            _defaultInput += "Z";
-                            SetLetter('Z', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D0:
-                            break;
-                        case Keys.D1:
-                            _defaultInput += "!";
-                            SetLetter('!', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D2:
-                            _defaultInput += "\"";
-                            SetLetter('"', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D3:
-                            _defaultInput += "#";
-                            SetLetter('#', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D4:
-                            _defaultInput += "$";
-                            SetLetter('$', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D5:
-                            _defaultInput += "%";
-                            SetLetter('%', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D6:
-                            _defaultInput += "&";
-                            SetLetter('&', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D7:
-                            _defaultInput += "'";
-                            SetLetter('\'', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D8:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "(");
-                            SetLetter('(', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D9:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, ")");
-                            SetLetter(')', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Space:
-                            _defaultInput += " ";
-                            SetLetter(' ', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Enter:
+                    case "enter":
+                        {
                             if (_defaultInput != "")
                                 RunCommand(_defaultInput);
                             NewLine();
                             break;
-                        case Keys.Control:
+                        }
+                    case "left" when _cursorPosition != 0:
+                        _cursorPosition--;
+                        tempcur--;
+                        break;
+                    case "right" when _cursorPosition != _lineLetterCount:
+                        _cursorPosition++;
+                        tempcur++;
+                        break;
+                    case "back":
+                        _defaultInput = _defaultInput.Remove(_cursorPosition - 1, 1);
+                        Debug.WriteLine(this._defaultInput);
+                        var oldcurpt = _cursorPosition;
+                        _lineLetterCount = 0;
+                        templlc = 0;
+                        tempcur = 0;
+                        _cursorPosition = 0;
+                        Echo(new string(' ',this._defaultInput.Length + 1));
+                        _lineLetterCount = 0;
+                        templlc = 0;
+                        tempcur = 0;
+                        _cursorPosition = 0;
+                        Echo(_defaultInput);
+                        _cursorPosition = oldcurpt - 1;
+                        tempcur = _cursorPosition;
+                        break;
+                    default:
+                        {
+                            if (str.Length == 1)
+                            {
+                                char ltr = str[0];
+                                _defaultInput = _defaultInput.Insert(_cursorPosition,ltr.ToString());
+                                var oldCurP = _cursorPosition; 
+                                _lineLetterCount = 0;
+                                templlc = 0;
+                                tempcur = 0;
+                                _cursorPosition = 0;
+                                Echo(_defaultInput);
+                                _cursorPosition = oldCurP + 1;
+                                tempcur = _cursorPosition;
+                            }
                             break;
-                        case Keys.OemPeriod:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, ">");
-                            SetLetter('>', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Oemcomma:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "<");
-                            SetLetter('<', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Back:
-                            break;
-                        case Keys.Up:
-                            break;
-                        case Keys.Down:
-                            break;
-                        case Keys.Left:
-                            if (_cursorPosition != 0)
-                                _cursorPosition--;
-                            break;
-                        case Keys.Right:
-                            if (_cursorPosition != _lineLetterCount)
-                                _cursorPosition++;
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (e.KeyCode)
-                    {
-                        case Keys.A:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "a");
-                            SetLetter('a', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.B:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "b");
-                            SetLetter('b', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.C:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "c");
-                            SetLetter('c', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "d");
-                            SetLetter('d', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.E:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "e");
-                            SetLetter('e', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.F:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "f");
-                            SetLetter('f', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.G:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "g");
-                            SetLetter('g', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.H:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "h");
-                            SetLetter('h', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.I:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "i");
-                            SetLetter('i', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.J:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "j");
-                            SetLetter('j', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.K:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "k");
-                            SetLetter('k', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.L:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "l");
-                            SetLetter('l', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.M:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "m");
-                            SetLetter('m', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.N:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "n");
-                            SetLetter('n', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.O:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "o");
-                            SetLetter('o', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.P:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "p");
-                            SetLetter('p', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Q:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "q");
-                            SetLetter('q', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.R:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "r");
-                            SetLetter('r', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.S:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "s");
-                            SetLetter('s', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.T:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "t");
-                            SetLetter('t', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.U:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "u");
-                            SetLetter('u', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.V:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "v");
-                            SetLetter('v', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.W:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "w");
-                            SetLetter('w', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.X:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "x");
-                            SetLetter('x', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Y:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "y");
-                            SetLetter('y', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Z:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "z");
-                            SetLetter('z', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D0:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "0");
-                            SetLetter('0', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D1:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "1");
-                            SetLetter('1', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D2:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "2");
-                            SetLetter('2', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D3:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "3");
-                            SetLetter('3', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D4:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "4");
-                            SetLetter('4', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D5:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "5");
-                            SetLetter('5', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D6:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "6");
-                            SetLetter('6', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D7:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "7");
-                            SetLetter('7', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D8:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "8");
-                            SetLetter('8', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.D9:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, "9");
-                            SetLetter('9', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Space:
-                            _defaultInput = _defaultInput.Insert(_cursorPosition, " ");
-                            SetLetter(' ', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Enter:
-                            if (_defaultInput != "")
-                                RunCommand(_defaultInput);
-                            NewLine();
-                            break;
-                        case Keys.Control:
-                            break;
-                        case Keys.OemPeriod:
-                            _defaultInput += _defaultInput.Insert(_cursorPosition, ">");
-                            SetLetter('>', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Oemcomma:
-                            _defaultInput += _defaultInput.Insert(_cursorPosition, "<");
-                            SetLetter('<', Color.White, Color.Black);
-                            _cursorPosition++;
-                            break;
-                        case Keys.Back:
-                            break;
-                        case Keys.Up:
-                            break;
-                        case Keys.Down:
-                            break;
-                        case Keys.Left:
-                            _cursorFlash.Stop();
-                            if (_cursorPosition != 0)
-                                _cursorPosition--;
-                            break;
-                        case Keys.Right:
-                            _cursorFlash.Stop();
-                            if (_cursorPosition != _lineLetterCount)
-                                _cursorPosition++;
-                            break;
-                    }
+                        }
                 }
                 _cursorFlash.Start();
             }
@@ -1394,7 +1028,7 @@ namespace Teknomli
         {
             BitmapData backbmpdat;
             //Bitmapを直接操作
-            backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             if (_lineLetterCount == _cursorPosition || _defaultInput == "")
             {
                 if (!_isFlashed)
@@ -1423,11 +1057,8 @@ namespace Teknomli
             else
             {
                 var ltr = _defaultInput[_cursorPosition].ToString();
-                ReplaceLetters(ref ltr);
-                //文字ファイルを読み込み
-                Bitmap letterbmp = _fonts![ltr];
-                //Bitmapを直接操作
-                BitmapData fontdata = letterbmp.LockBits(new Rectangle(0, 0, letterbmp.Width, letterbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+                //Letter.ReplaceLetters(ref ltr);
+                BitmapData fontdata = _fonts[Letter.ConvertLetterCode(ltr)];
                 if (!_isFlashed)
                 {
                     for (int x = 0; x < LetterWidth; x++)
@@ -1464,8 +1095,6 @@ namespace Teknomli
                     }
                     _isFlashed = false;
                 }
-                if (fontdata != null)
-                    letterbmp.UnlockBits(fontdata);
             }
             if (backbmpdat != null)
                 _backbmp.UnlockBits(backbmpdat);

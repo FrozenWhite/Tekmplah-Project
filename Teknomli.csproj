@@ -10,7 +10,7 @@
     <Platforms>AnyCPU;x86</Platforms>
     <LangVersion>10</LangVersion>
     <ApplicationIcon>pc.ico</ApplicationIcon>
-    <Version>0.0.4.1</Version>
+    <Version>0.0.4.2</Version>
     <Description>Teknomli x4 Basic Emulator</Description>
     <Copyright>FrozenWhite</Copyright>
     <PackageIcon>pc.png</PackageIcon>
