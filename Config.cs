@@ -9,15 +9,24 @@
 
         private void startbtn_Click(object sender, EventArgs e)
         {
-            Main main = new Main();
+            Main main = new();
             this.Enabled = false;
-            main.ShowDialog();
-            this.Enabled = true;
+            try
+            {
+                main.ShowDialog();
+            }
+            catch
+            {
+                main.Reset();
+            }
+            finally
+            {
+                this.Enabled = true;
+            }
         }
 
         private void Config_Load(object sender, EventArgs e)
         {
-
         }
     }
 }

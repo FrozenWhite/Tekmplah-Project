@@ -193,6 +193,7 @@ namespace Teknomli
             render2.Dock = DockStyle.Fill;
             render3.Dock = DockStyle.Fill;
             back.Dock = DockStyle.Fill;
+
         }
 
         public sealed override string Text
@@ -506,12 +507,12 @@ namespace Teknomli
         {
             //起動音
             Echo("Version Teknomli x4 Basic"); NewLine();
-            Echo("Copyright 2022 FrozenWhite"); NewLine();
+            Echo("Copyright (c) FrozenWhite.net"); NewLine();
             //ファイルを開く
             Echo("checking 8bytes"); NewLine();
             Echo("Load 1st"); NewLine();
             char[] cs = new char[8];
-            using (StreamReader sr = new StreamReader(@".\os.hdf", Encoding.ASCII))
+            using (StreamReader sr = new(@".\os.hdf", Encoding.ASCII))
             {
                 int n = 0;
                 for (int i = 0; i < 8; i++)
@@ -548,10 +549,10 @@ namespace Teknomli
         {
             _outputLineCount = 0;
             _cursorPosition = 0;
-            _defaultOutput = ""; 
+            _defaultOutput = "";
             Echo("------------------------------------------------------------"); NewLine();
             Echo("Horai OS 彩"); NewLine();
-            Echo("Copyright (c) 2022 FrozenWhite"); NewLine();
+            Echo("Copyright (c) FrozenWhite.net"); NewLine();
             Echo("------------------------------------------------------------"); NewLine();
             _isConsole = true;
             //カーソルの点滅
@@ -597,6 +598,12 @@ namespace Teknomli
                 case "draw":
                     switch (cmd[1].ToLower())
                     {
+                        case "pie":
+                            BitmapData render1bmpdat1 = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                            GraphicsManager.FillPie(ref render1bmpdat1, Color.White, 0, 0, 50, 70, 0, 20);
+                            _render1Bmp.UnlockBits(render1bmpdat1);
+                            render1.Image = _render1Bmp;
+                            break;
                         case "line":
                             string value = "(10,10)";
                             string strValue = value.Remove(0, value.IndexOf("(", StringComparison.Ordinal) + 1);
@@ -604,22 +611,32 @@ namespace Teknomli
                             Debug.WriteLine(strValue);
                             break;
                         case "circle":
-                            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-                            int width = 50;
-                            int height = 50;
-                            for (int x = 0; x < width; x++)
+                            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                            GraphicsManager.FillEllipse(ref render1bmpdat, Color.White, 0, 0, 50, 50);
+                            _render1Bmp.UnlockBits(render1bmpdat);
+                            render1.Image = _render1Bmp;
+                            break;
+                        case "onmyou":
+                            BitmapData _render3BitmapData = _render3Bmp!.LockBits(new Rectangle(0, 0, _render3Bmp.Width, _render3Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                            for (int x = 0; x < _render3Bmp.Width; x++)
                             {
-                                for (int y = 0; y < height; y++)
+                                for (int y = 0; y < _render3Bmp.Height; y++)
                                 {
-                                    if ((x - width / 2) * (x - width / 2) + (y - height / 2) * (y - height / 2) <= (width / 2) * (height / 2))
-                                    {
-                                        BitmapDataEx.SetPixel(render1bmpdat, x, y, Color.FromArgb(255, 255, 255, 255));
-                                    }
+                                    BitmapDataEx.SetPixel(_render3BitmapData, x, y, Color.Green);
                                 }
                             }
-                            _render1Bmp.UnlockBits(render1bmpdat);
-                            _render1Bmp.MakeTransparent(Color.Black);
-                            render1.Image = _render1Bmp;
+                            this._render3Bmp.UnlockBits(_render3BitmapData);
+                            this.render3.Image = _render3Bmp;
+                            int r = 35;
+                            using (Graphics g = Graphics.FromImage(this._render2Bmp))
+                            {
+                                g.FillEllipse(Brushes.Black, 0, 0, r, r);
+                                g.FillPie(Brushes.White, 0, 0, r, r, 270, 180);
+                                g.FillEllipse(Brushes.White, r / 3, 0, r / 2 + 1, r / 2 + 1);
+                                g.FillEllipse(Brushes.Black, r / 3, r / 2, r / 2 + 1, r / 2 + 1);
+                                g.FillEllipse(Brushes.White, (int)(r / 2.5), (int)(r / 1.5), r / 5, r / 5);
+                                g.FillEllipse(Brushes.Black, (int)(r / 2.5), (int)(r / 4.5), r / 5, r / 5);
+                            }
                             break;
                     }
                     break;
@@ -633,12 +650,16 @@ namespace Teknomli
             }
         }
 
+        private void SetEvent(string runScript, string trigger)
+        {
+
+        }
         private void RunApplication(string name)
         {
             _cursorFlash!.Stop();
         }
 
-        private void reset()
+        public void Reset()
         {
 
         }
@@ -696,11 +717,11 @@ namespace Teknomli
             _cursorFlash!.Stop();
             Bitmap cirblue = new Bitmap(@"D:\Downloads\circleblue.bmp");
             Bitmap cirred = new Bitmap(@"D:\Downloads\circlered.bmp");
-            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            BitmapData bluecircleData = cirblue.LockBits(new Rectangle(0, 0, cirblue.Width, cirblue.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData redcircleData = cirred.LockBits(new Rectangle(0, 0, cirred.Width, cirred.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bluecircleData = cirblue.LockBits(new Rectangle(0, 0, cirblue.Width, cirblue.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData redcircleData = cirred.LockBits(new Rectangle(0, 0, cirred.Width, cirred.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             for (float i = 0; i < 361; i++)
             {
                 if (i % 10 == 0 && minrad <= i && i <= maxrad)
@@ -750,35 +771,6 @@ namespace Teknomli
 
         #endregion
         #region 描画
-
-        private static Bitmap RotateImage(Bitmap bmp, float angle)
-        {
-            var alpha = angle;
-            while (alpha < 0) alpha += 360;
-
-            var gamma = 90;
-            var beta = 180 - angle - gamma;
-
-            float c1 = bmp.Height;
-            var a1 = (float)(c1 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
-            var b1 = (float)(c1 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
-
-            float c2 = bmp.Width;
-            var a2 = (float)(c2 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
-            var b2 = (float)(c2 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
-
-            var width = Convert.ToInt32(b2 + a1);
-            var height = Convert.ToInt32(b1 + a2);
-
-            Bitmap rotatedImage = new Bitmap(width, height);
-            using Graphics g = Graphics.FromImage(rotatedImage);
-            g.TranslateTransform(rotatedImage.Width / 2, rotatedImage.Height / 2);
-            g.RotateTransform(angle);
-            g.TranslateTransform(-rotatedImage.Width / 2, -rotatedImage.Height / 2);
-            g.DrawImage(bmp, new Point((width - bmp.Width) / 2, (height - bmp.Height) / 2));
-            return rotatedImage;
-        }
-
         /// <summary>
         /// 指定された文字をコンソールに出力する
         /// </summary>
@@ -815,7 +807,7 @@ namespace Teknomli
         /// </summary>
         /// <param name="letter">出力するChar</param>
         /// <param name="LetterColor"></param>
-        internal void SetLetter(char letter, Color LetterColor, Color backColor,int lx = -1,int ly = -1)
+        internal void SetLetter(char letter, Color LetterColor, Color backColor, int lx = -1, int ly = -1)
         {
             _cursorFlash?.Stop();
             //charをstringに変換
@@ -830,7 +822,7 @@ namespace Teknomli
                 tempcur = 0;
                 _isTempReturn = true;
             }
-            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
             switch (ltr)
             {
                 //空欄だったらそのまま
@@ -910,7 +902,7 @@ namespace Teknomli
                 BitmapData? backbmpdat = null;
                 try
                 {
-                    backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+                    backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
                     //カーソルの削除
                     if (_lineLetterCount == tempcur || _defaultInput == "")
                     {
@@ -979,7 +971,7 @@ namespace Teknomli
                         templlc = 0;
                         tempcur = 0;
                         _cursorPosition = 0;
-                        Echo(new string(' ',this._defaultInput.Length + 1));
+                        Echo(new string(' ', this._defaultInput.Length + 1));
                         _lineLetterCount = 0;
                         templlc = 0;
                         tempcur = 0;
@@ -993,8 +985,8 @@ namespace Teknomli
                             if (str.Length == 1)
                             {
                                 char ltr = str[0];
-                                _defaultInput = _defaultInput.Insert(_cursorPosition,ltr.ToString());
-                                var oldCurP = _cursorPosition; 
+                                _defaultInput = _defaultInput.Insert(_cursorPosition, ltr.ToString());
+                                var oldCurP = _cursorPosition;
                                 _lineLetterCount = 0;
                                 templlc = 0;
                                 tempcur = 0;
@@ -1028,7 +1020,7 @@ namespace Teknomli
         {
             BitmapData backbmpdat;
             //Bitmapを直接操作
-            backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height),  ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             if (_lineLetterCount == _cursorPosition || _defaultInput == "")
             {
                 if (!_isFlashed)

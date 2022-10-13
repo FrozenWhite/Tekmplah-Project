@@ -1,5 +1,6 @@
 ﻿namespace Teknomli
 {
+    //自作Vector
     [Serializable]
     public struct Vector : IFormattable
     {

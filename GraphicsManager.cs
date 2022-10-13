@@ -1,0 +1,78 @@
+﻿using System.Diagnostics;
+using System.Drawing.Imaging;
+
+namespace Teknomli
+{
+    internal static class GraphicsManager
+    {
+        public static Bitmap RotateImage(Bitmap bmp, float angle)
+        {
+            var alpha = angle;
+            while (alpha < 0) alpha += 360;
+
+            var gamma = 90;
+            var beta = 180 - angle - gamma;
+
+            float c1 = bmp.Height;
+            var a1 = (float)(c1 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+            var b1 = (float)(c1 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+
+            float c2 = bmp.Width;
+            var a2 = (float)(c2 * Math.Sin(alpha * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+            var b2 = (float)(c2 * Math.Sin(beta * Math.PI / 180) / Math.Sin(gamma * Math.PI / 180));
+
+            var width = Convert.ToInt32(b2 + a1);
+            var height = Convert.ToInt32(b1 + a2);
+
+            Bitmap rotatedImage = new Bitmap(width, height);
+            using Graphics g = Graphics.FromImage(rotatedImage);
+            g.TranslateTransform(rotatedImage.Width / 2, rotatedImage.Height / 2);
+            g.RotateTransform(angle);
+            g.TranslateTransform(-rotatedImage.Width / 2, -rotatedImage.Height / 2);
+            g.DrawImage(bmp, new Point((width - bmp.Width) / 2, (height - bmp.Height) / 2));
+            return rotatedImage;
+        }
+
+        public static void FillEllipse(ref BitmapData bmp, Color col, int x, int y, int width, int height)
+        {
+            for (int xl = 0; xl < bmp.Width; xl++)
+            {
+                for (int yl = 0; yl < bmp.Height; yl++)
+                {
+                    int dx = xl - width - x + 1;
+                    int dy = yl - height - y + 1;
+                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, Color.White);
+                }
+            }
+        }
+
+        public static void FillPie(ref BitmapData bmp, Color col, int x, int y, int width, int height, uint startAngle, uint sweepAngle)
+        {
+            double startRad = Math.ToRad(startAngle);
+            double sweepRad = Math.ToRad(sweepAngle);
+            if (startRad > sweepRad)
+                sweepRad += 2 * Math.PI;
+           
+            for (int xl = 0; xl < bmp.Width; xl++)
+            {
+                for (int yl = 0; yl < bmp.Height; yl++)
+                {
+                    int dx = xl - width - x + 1;
+                    int dy = yl - height - y + 1;
+                    double prad = -Math.Atan2(dx, dy);// - Math.Atan2(dx, dy) / 2;
+                    if (prad < 0)
+                        prad += 2 * Math.PI;
+                    if (prad < startRad || prad > sweepRad)
+                    {
+                        if (sweepRad >= 2 * Math.PI)
+                        {
+                            if (prad + 2 * Math.PI < startRad || prad + 2 * Math.PI > sweepRad) continue;
+                        }
+                        else continue;
+                    }
+                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, Color.White); 
+                }
+            }
+        }
+    }
+}
