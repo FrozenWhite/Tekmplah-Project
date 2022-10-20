@@ -33,7 +33,22 @@ namespace Teknomli
             return rotatedImage;
         }
 
-        public static void FillEllipse(ref BitmapData bmp, Color col, int x, int y, int width, int height)
+        public static void DrawLine(BitmapData bmp, Color col, int x, int y, int x1, int y1)
+        {
+            int dx = x1 - x;
+            int dy = y1 - x;
+            double len = Math.Sqrt(dx * dx + dy * dy);
+            double rad = Math.Atan2(dy, dx);
+            for (int i = 0; i < len; i++)
+            {
+                int ex = (int)(x + i * Math.Cos(rad));
+                int ey = (int)(y + i * Math.Sin(rad));
+                Debug.WriteLine($"x:{ex},y:{ey}");
+                BitmapDataEx.SetPixel(bmp, ex, ey, col);
+            }
+        }
+
+        public static void FillEllipse(BitmapData bmp, Color col, int x, int y, int width, int height)
         {
             for (int xl = 0; xl < bmp.Width; xl++)
             {
@@ -41,25 +56,24 @@ namespace Teknomli
                 {
                     int dx = xl - width - x + 1;
                     int dy = yl - height - y + 1;
-                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, Color.White);
+                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, col);
                 }
             }
         }
 
-        public static void FillPie(ref BitmapData bmp, Color col, int x, int y, int width, int height, uint startAngle, uint sweepAngle)
+        public static void FillPie(BitmapData bmp, Color col, int x, int y, int width, int height, uint startAngle, uint sweepAngle)
         {
             double startRad = Math.ToRad(startAngle);
             double sweepRad = Math.ToRad(sweepAngle);
             if (startRad > sweepRad)
                 sweepRad += 2 * Math.PI;
-           
-            for (int xl = 0; xl < bmp.Width; xl++)
+            Parallel.For(0, bmp.Width, xl =>
             {
                 for (int yl = 0; yl < bmp.Height; yl++)
                 {
                     int dx = xl - width - x + 1;
                     int dy = yl - height - y + 1;
-                    double prad = -Math.Atan2(dx, dy);// - Math.Atan2(dx, dy) / 2;
+                    double prad = -Math.Atan2(dx, dy);
                     if (prad < 0)
                         prad += 2 * Math.PI;
                     if (prad < startRad || prad > sweepRad)
@@ -70,7 +84,18 @@ namespace Teknomli
                         }
                         else continue;
                     }
-                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, Color.White); 
+                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, col);
+                }
+            });
+        }
+
+        public static void FillRectangle(BitmapData bmp, Color col, int x, int y, int width, int height)
+        {
+            for (int xl = x; xl < x + 50; xl++)
+            {
+                for (int yl = y; yl < y + 50; yl++)
+                {
+                    BitmapDataEx.SetPixel(bmp, xl, yl, col);
                 }
             }
         }

@@ -11,6 +11,7 @@
         {
             Main main = new();
             this.Enabled = false;
+            this.WindowState = FormWindowState.Minimized;
             try
             {
                 main.ShowDialog();
@@ -23,6 +24,8 @@
             {
                 this.Enabled = true;
             }
+
+            this.WindowState = FormWindowState.Normal;
         }
 
         private void Config_Load(object sender, EventArgs e)

@@ -14,7 +14,6 @@
             return x is < 0.0 and >= -0.001;
         }
 
-
         /// <summary>
         /// 指定の数値を指定した値で累乗する
         /// </summary>
@@ -34,7 +33,7 @@
         /// <summary>
         /// 弧度法をラジアンに変換する
         /// </summary>
-        /// <param name="rad"></param>
+        /// <param name="deg"></param>
         /// <returns></returns>
         public static double ToRad(double deg)
         {
@@ -116,6 +115,23 @@
                 n++;
             }
             return y;
+        }
+
+        public static double Tan(double d)
+        {
+            int k = (int)(d / (PI / 2) + (d >= 0 ? 0.5 : -0.5));
+            double d2 = (d - (3217.0 / 2048) * k) + 4.4544551033807686 * k;
+            double t = 0;
+            for (int i = 19; i >= 3; i -= 2)
+            {
+                t = d2 * d2 / (i - t);
+            }
+            t = d2 / (1 - t);
+            if ((k % 2) == 0)
+                return t;
+            if (t != 0)
+                return -1 / t;
+            return Double.MaxValue;
         }
 
         public static double Atan(double x)

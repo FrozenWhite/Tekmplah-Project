@@ -1,6 +1,4 @@
 ﻿// Created by FrozenWhite
-using System.Reflection.Emit;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Diagnostics;
@@ -8,6 +6,9 @@ using System.Text;
 using System.Drawing.Imaging;
 using Teknomli.Properties;
 using Timer = System.Timers.Timer;
+using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Xml.Linq;
 
 namespace Teknomli
 {
@@ -61,7 +62,7 @@ namespace Teknomli
         private Random rand = new Random();
 
         /// <summary>
-        /// メモリ(640KB)
+        /// メモリ(容量は忘れた)
         /// こんなにいるかなぁ()
         /// </summary>
         private IntPtr mem;
@@ -70,7 +71,27 @@ namespace Teknomli
         /// <summary>
         /// Back用のBitmap
         /// </summary>
-        private Bitmap? _backbmp;
+        private Bitmap? _backBmpTmp;
+
+        /// <summary>
+        /// Render1用のBitmapの一時確保
+        /// </summary>
+        private Bitmap? _render1BmpTmp;
+
+        /// <summary>
+        /// Render2用のBitmapの一時確保
+        /// </summary>
+        private Bitmap? _render2BmpTmp;
+
+        /// <summary>
+        /// Render3用のBitmapの一時確保
+        /// </summary>
+        private Bitmap? _render3BmpTmp;
+
+        /// <summary>
+        /// Back用のBitmap
+        /// </summary>
+        private Bitmap? _backBmp;
 
         /// <summary>
         /// Render1用のBitmap
@@ -88,19 +109,39 @@ namespace Teknomli
         private Bitmap? _render3Bmp;
 
         /// <summary>
+        /// Back用のBitmapData
+        /// </summary>
+        private BitmapData? _backBmpData;
+
+        /// <summary>
+        /// Render1用のBitmapData
+        /// </summary>
+        private BitmapData? _render1BmpData;
+
+        /// <summary>
+        /// Render2用のBitmapData
+        /// </summary>
+        private BitmapData? _render2BmpData;
+
+        /// <summary>
+        /// Render3用のBitmapData
+        /// </summary>
+        private BitmapData? _render3BmpData;
+
+        /// <summary>
         /// 一行にある文字数
         /// </summary>
-        private int _lineLetterCount = 0;
+        private int _lineLetterCount;
 
         /// <summary>
         /// 出力された行数
         /// </summary>
-        private int _outputLineCount = 0;
+        private int _outputLineCount;
 
         /// <summary>
         /// カーソルがある場所
         /// </summary>
-        private int _cursorPosition = 0;
+        private int _cursorPosition;
 
         /// <summary>
         /// 入力された文字列
@@ -132,251 +173,27 @@ namespace Teknomli
         /// </summary>
         private BitmapData[] _fonts;
 
-        private MethodInfo? _audio1;
-
         private List<string>? _outputedLetters;
+
+        private int returncnt = 0;
         #endregion
         #endregion
         #region C++のインポート
         [DllImport("winmm.dll")]
         public static extern int timeBeginPeriod(int uuPeriod);
 
-        /// <summary>
-        /// PInvoke関数情報から、メソッドのメタデータを作成する。
-        /// </summary>
-        /// <param name="invInfo">PInvoke関数情報</param>
-        /// <returns>PInvoke関数メタデータ</returns>
-        public static MethodInfo? CreateMethodInfo(PInvoke invInfo)
-        {
-            string moduleName = Path.GetFileNameWithoutExtension(invInfo.ModuleFile)!.ToUpper();
-            AssemblyBuilder asmBld = AssemblyBuilder.DefineDynamicAssembly(
-                new AssemblyName("Asm" + moduleName), AssemblyBuilderAccess.Run);
+        [DllImport("kernel32.dll")]
+        public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
 
-            ModuleBuilder modBld = asmBld.DefineDynamicModule(
-                "Mod" + moduleName);
-
-            TypeBuilder typBld = modBld.DefineType(
-                "Class" + moduleName,
-                TypeAttributes.Public | TypeAttributes.Class);
-
-            if (invInfo.ProcName != null &&
-                invInfo.ModuleFile != null &&
-                invInfo.EntryPoint != null)
-            {
-                MethodBuilder methodBuilder = typBld.DefinePInvokeMethod(
-                    name: invInfo.ProcName,
-                    dllName: invInfo.ModuleFile,
-                    entryName: invInfo.EntryPoint,
-                    attributes: MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.PinvokeImpl | MethodAttributes.HideBySig,
-                    callingConvention: CallingConventions.Standard,
-                    returnType: invInfo.ReturnType,
-                    invInfo.ParameterTypes.ToArray(),
-                    invInfo.CallingConvention,
-                    invInfo.CharSet);
-                methodBuilder.SetImplementationFlags(MethodImplAttributes.PreserveSig);
-            }
-
-            return typBld.CreateType()?.GetMethod(invInfo.ProcName ?? "");
-        }
+        private Timer updater;
         #endregion
         #region コンストラクタ
         public Main()
         {
             InitializeComponent();
-
             this.Text = $@"{ProductName} v{ProductVersion}";
-
-            render1.Parent = render2;
-            render2.Parent = render3;
-            render3.Parent = back;
-            render1.Dock = DockStyle.Fill;
-            render2.Dock = DockStyle.Fill;
-            render3.Dock = DockStyle.Fill;
-            back.Dock = DockStyle.Fill;
-
-        }
-
-        public sealed override string Text
-        {
-            get { return base.Text; }
-            set { base.Text = value; }
-        }
-
-        #endregion
-        #region ブートローダー
-
-        /// <summary>
-        /// 起動
-        /// </summary>
-        private async void Start()
-        {
-            timeBeginPeriod(1);
-            await Task.Run(() => Thread.Sleep(500));
-            LoadDefaultFonts();
-            //Bitmapを作成
-            _backbmp = new Bitmap(back.Width, back.Height);
-            _render1Bmp = new Bitmap(render1.Width, render1.Height);
-            _render2Bmp = new Bitmap(render2.Width, render2.Height);
-            _render3Bmp = new Bitmap(render3.Width, render3.Height);
-            _render1Bmp.MakeTransparent(Color.Black);
-            _render2Bmp.MakeTransparent(Color.Black);
-            _render3Bmp.MakeTransparent(Color.Black);
-            //セット
-            back.Image = _backbmp;
-            render1.Image = _render1Bmp;
-            render2.Image = _render2Bmp;
-            render3.Image = _render3Bmp;
-            _outputedLetters = new List<string>();
-            _outputedLetters.Add("");
-            var invInfo = new PInvoke()
-            {
-                ProcName = "Play",
-                EntryPoint = "Play",
-                ModuleFile = "YukiLib.dll",
-                ReturnType = typeof(void),
-                // frq,volume,playtime,type
-                ParameterTypes = new[] { typeof(float), typeof(int), typeof(int), typeof(int) },
-                CallingConvention = CallingConvention.StdCall,
-                CharSet = CharSet.Unicode
-            };
-            //Invokeで実行
-            _audio1 = CreateMethodInfo(invInfo);
-            _audio1?.Invoke(null, new object[] { 2000, 100, 100, 7 });
-            await Task.Run(() => Thread.Sleep(90));
-            _audio1?.Invoke(null, new object[] { 1000, 100, 100, 7 });
-            await MemoryCheck();
-            Echo("memory check OK"); NewLine();
-            await CheckHeader();
-            Init();
-        }
-
-        int memchki = 0;
-        private async Task MemoryCheck()
-        {
-            int allmemcnt = 3200001;
-            mem = Marshal.AllocHGlobal(allmemcnt);
-            var sw = Stopwatch.StartNew();
-            for (memchki = 0; memchki < allmemcnt; memchki++)
-            {
-                Marshal.WriteByte(mem, memchki, Convert.ToByte(255));
-                if (sw.ElapsedMilliseconds >= 10)
-                {
-                    //Bitmapを作成
-                    _backbmp = new Bitmap(back.Width, back.Height);
-                    //セット
-                    back.Image = _backbmp;
-                    Echo($"MEMORY {memchki / 1000}KB OK");
-                    templlc = 0;
-                    _lineLetterCount = 0;
-                    _defaultOutput = "";
-                    sw.Restart();
-                    await Task.Run(() => Thread.Sleep(1));
-                }
-            }
-
-            sw.Stop();
-            Echo($"MEMORY {memchki / 1000}KB OK");
-            NewLine();
-        }
-
-        private void UnLoadDefaultFonts()
-        {
-            fonts._0.UnlockBits(_fonts[0]);
-            fonts._1.UnlockBits(_fonts[1]);
-            fonts._2.UnlockBits(_fonts[2]);
-            fonts._3.UnlockBits(_fonts[3]);
-            fonts._4.UnlockBits(_fonts[4]);
-            fonts._5.UnlockBits(_fonts[5]);
-            fonts._6.UnlockBits(_fonts[6]);
-            fonts._7.UnlockBits(_fonts[7]);
-            fonts._8.UnlockBits(_fonts[8]);
-            fonts._9.UnlockBits(_fonts[9]);
-            fonts.A.UnlockBits(_fonts[10]);
-            fonts.B.UnlockBits(_fonts[11]);
-            fonts.C.UnlockBits(_fonts[12]);
-            fonts.D.UnlockBits(_fonts[13]);
-            fonts.E.UnlockBits(_fonts[14]);
-            fonts.F.UnlockBits(_fonts[15]);
-            fonts.G.UnlockBits(_fonts[16]);
-            fonts.H.UnlockBits(_fonts[17]);
-            fonts.I.UnlockBits(_fonts[18]);
-            fonts.J.UnlockBits(_fonts[19]);
-            fonts.K.UnlockBits(_fonts[20]);
-            fonts.L.UnlockBits(_fonts[21]);
-            fonts.M.UnlockBits(_fonts[22]);
-            fonts.N.UnlockBits(_fonts[23]);
-            fonts.O.UnlockBits(_fonts[24]);
-            fonts.P.UnlockBits(_fonts[25]);
-            fonts.Q.UnlockBits(_fonts[26]);
-            fonts.R.UnlockBits(_fonts[27]);
-            fonts.S.UnlockBits(_fonts[28]);
-            fonts.T.UnlockBits(_fonts[29]);
-            fonts.U.UnlockBits(_fonts[30]);
-            fonts.V.UnlockBits(_fonts[31]);
-            fonts.W.UnlockBits(_fonts[32]);
-            fonts.X.UnlockBits(_fonts[33]);
-            fonts.Y.UnlockBits(_fonts[34]);
-            fonts.Z.UnlockBits(_fonts[35]);
-            fonts.a_s.UnlockBits(_fonts[36]);
-            fonts.b_s.UnlockBits(_fonts[37]);
-            fonts.c_s.UnlockBits(_fonts[38]);
-            fonts.d_s.UnlockBits(_fonts[39]);
-            fonts.e_s.UnlockBits(_fonts[40]);
-            fonts.f_s.UnlockBits(_fonts[41]);
-            fonts.g_s.UnlockBits(_fonts[42]);
-            fonts.h_s.UnlockBits(_fonts[43]);
-            fonts.i_s.UnlockBits(_fonts[44]);
-            fonts.j_s.UnlockBits(_fonts[45]);
-            fonts.k_s.UnlockBits(_fonts[46]);
-            fonts.l_s.UnlockBits(_fonts[47]);
-            fonts.m_s.UnlockBits(_fonts[48]);
-            fonts.n_s.UnlockBits(_fonts[49]);
-            fonts.o_s.UnlockBits(_fonts[50]);
-            fonts.p_s.UnlockBits(_fonts[51]);
-            fonts.q_s.UnlockBits(_fonts[52]);
-            fonts.r_s.UnlockBits(_fonts[53]);
-            fonts.s_s.UnlockBits(_fonts[54]);
-            fonts.t_s.UnlockBits(_fonts[55]);
-            fonts.u_s.UnlockBits(_fonts[56]);
-            fonts.v_s.UnlockBits(_fonts[57]);
-            fonts.w_s.UnlockBits(_fonts[58]);
-            fonts.x_s.UnlockBits(_fonts[59]);
-            fonts.y_s.UnlockBits(_fonts[60]);
-            fonts.z_s.UnlockBits(_fonts[61]);
-            fonts.que.UnlockBits(_fonts[62]);
-            fonts.exc.UnlockBits(_fonts[63]);
-            fonts.quo.UnlockBits(_fonts[64]);
-            fonts.has.UnlockBits(_fonts[65]);
-            fonts.dol.UnlockBits(_fonts[66]);
-            fonts.per.UnlockBits(_fonts[67]);
-            fonts.and.UnlockBits(_fonts[68]);
-            fonts.sin.UnlockBits(_fonts[69]);
-            fonts.brs.UnlockBits(_fonts[70]);
-            fonts.bre.UnlockBits(_fonts[71]);
-            fonts.bkt.UnlockBits(_fonts[72]);
-            fonts.bsl.UnlockBits(_fonts[73]);
-            fonts.cbs.UnlockBits(_fonts[74]);
-            fonts.cbe.UnlockBits(_fonts[75]);
-            fonts.sla.UnlockBits(_fonts[76]);
-            fonts.plu.UnlockBits(_fonts[77]);
-            fonts.min.UnlockBits(_fonts[78]);
-            fonts.ast.UnlockBits(_fonts[79]);
-            fonts.dot.UnlockBits(_fonts[80]);
-            fonts.com.UnlockBits(_fonts[81]);
-            fonts.spa.UnlockBits(_fonts[82]);
-            fonts.gre.UnlockBits(_fonts[83]);
-            fonts.les.UnlockBits(_fonts[84]);
-            fonts.equ.UnlockBits(_fonts[85]);
-            fonts.sai.UnlockBits(_fonts[86]);
-        }
-
-        /// <summary>
-        /// システムデフォルトのフォントを読み込む
-        /// </summary>
-        private void LoadDefaultFonts()
-        {
             _fonts = new[]
-            {
+{
                 #region Number
                 fonts._0.LockBits(new Rectangle(0, 0, fonts._0.Width, fonts._0.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
                 fonts._1.LockBits(new Rectangle(0, 0, fonts._1.Width, fonts._1.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
@@ -493,11 +310,118 @@ namespace Teknomli
                 // <
                 fonts.les.LockBits(new Rectangle(0, 0, fonts.les.Width, fonts.les.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
                 // =
-                fonts.equ.LockBits(new Rectangle(0, 0, fonts.gre.Width, fonts.gre.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                fonts.equ.LockBits(new Rectangle(0, 0, fonts.equ.Width, fonts.equ.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // ^
+                fonts.car.LockBits(new Rectangle(0, 0, fonts.car.Width, fonts.car.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // ~
+                fonts.til.LockBits(new Rectangle(0, 0, fonts.til.Width, fonts.til.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // [
+                fonts.sbs.LockBits(new Rectangle(0, 0, fonts.sbs.Width, fonts.sbs.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // ]
+                fonts.sbe.LockBits(new Rectangle(0, 0, fonts.sbe.Width, fonts.sbe.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // |
+                fonts.pip.LockBits(new Rectangle(0, 0, fonts.pip.Width, fonts.pip.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // @
+                fonts.atm.LockBits(new Rectangle(0, 0, fonts.atm.Width, fonts.atm.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // :
+                fonts.col.LockBits(new Rectangle(0, 0, fonts.col.Width, fonts.col.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // ;
+                fonts.smc.LockBits(new Rectangle(0, 0, fonts.smc.Width, fonts.smc.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
+                // _
+                fonts.und.LockBits(new Rectangle(0, 0, fonts.und.Width, fonts.und.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
                 // 彩
                 fonts.sai.LockBits(new Rectangle(0, 0, fonts.sai.Width, fonts.sai.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
 				#endregion
             };
+
+            this.render1.Parent = render2;
+            this.render2.Parent = render3;
+            this.render3.Parent = back;
+            this.render1.Dock = DockStyle.Fill;
+            this.render2.Dock = DockStyle.Fill;
+            this.render3.Dock = DockStyle.Fill;
+            this.back.Dock = DockStyle.Fill;
+            this.updater = new Timer
+            {
+                Interval = 80
+            };
+            this.updater.Elapsed += Update;
+
+        }
+
+        public sealed override string Text
+        {
+            get => base.Text;
+            set => base.Text = value;
+        }
+
+        #endregion
+        #region ブートローダー
+        /// <summary>
+        /// 起動
+        /// </summary>
+        private async void Start()
+        {
+            timeBeginPeriod(1);
+            await Task.Run(() => Thread.Sleep(500));
+            //Bitmapを作成
+            this._backBmp = new Bitmap(back.Width, back.Height);
+            this._render1Bmp = new Bitmap(render1.Width, render1.Height);
+            this._render2Bmp = new Bitmap(render2.Width, render2.Height);
+            this._render3Bmp = new Bitmap(render3.Width, render3.Height);
+
+            this._backBmpTmp = new Bitmap(back.Width, back.Height);
+            this._render1BmpTmp = new Bitmap(render1.Width, render1.Height);
+            this._render2BmpTmp = new Bitmap(render2.Width, render2.Height);
+            this._render3BmpTmp = new Bitmap(render3.Width, render3.Height);
+
+            this._backBmpData = this._backBmpTmp.LockBits(new Rectangle(0, 0, this._backBmp.Width, this._backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            this._render1BmpData = this._render1BmpTmp.LockBits(new Rectangle(0, 0, this._render1Bmp.Width, this._render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            this._render2BmpData = this._render2BmpTmp.LockBits(new Rectangle(0, 0, this._render2Bmp.Width, this._render2Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            this._render3BmpData = this._render3BmpTmp.LockBits(new Rectangle(0, 0, this._render3Bmp.Width, this._render3Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+
+            this._render1Bmp.MakeTransparent(Color.Black);
+            this._render2Bmp.MakeTransparent(Color.Black);
+            this._render3Bmp.MakeTransparent(Color.Black);
+            //セット
+            this.back.Image = _backBmp;
+            this.render1.Image = _render1Bmp;
+            this.render2.Image = _render2Bmp;
+            this.render3.Image = _render3Bmp;
+            this._outputedLetters = new List<string>();
+            this._outputedLetters.Add("");
+            Audio audio1 = new("YukiLib.dll");
+            await Task.Run(() => audio1.Play(2000, 150, 100, 7));
+            await Task.Run(() => audio1.Play(1000, 150, 100, 7));
+            this.updater.Start();
+            await MemoryCheck();
+            this.Echo("memory check OK"); NewLine();
+            await CheckHeader();
+            this.Init();
+        }
+
+        private async Task MemoryCheck()
+        {
+            int memchki;
+            UInt32 allmemcnt = 655360 + 4063232;
+            mem = Marshal.AllocHGlobal((int)allmemcnt);
+            var sw = Stopwatch.StartNew();
+            for (memchki = 0; memchki < allmemcnt; memchki++)
+            {
+                Marshal.WriteByte(mem, memchki, Convert.ToByte(255));
+                if (sw.ElapsedMilliseconds >= 10)
+                {
+                    this.CleanScreen();
+                    Echo($"MEMORY {memchki / 1024}KB OK");
+                    templlc = 0;
+                    _lineLetterCount = 0;
+                    _defaultOutput = "";
+                    sw.Restart();
+                }
+            }
+            sw.Stop();
+            Echo($"MEMORY {memchki / 1024}KB OK");
+            NewLine();
         }
 
         /// <summary>
@@ -505,12 +429,11 @@ namespace Teknomli
         /// </summary>
         private async Task CheckHeader()
         {
-            //起動音
             Echo("Version Teknomli x4 Basic"); NewLine();
             Echo("Copyright (c) FrozenWhite.net"); NewLine();
             //ファイルを開く
             Echo("checking 8bytes"); NewLine();
-            Echo("Load 1st"); NewLine();
+            Echo("Load 1st drive"); NewLine();
             char[] cs = new char[8];
             using (StreamReader sr = new(@".\os.hdf", Encoding.ASCII))
             {
@@ -520,12 +443,11 @@ namespace Teknomli
                     if (Encoding.ASCII.GetBytes(cs)[i] != Encoding.ASCII.GetBytes("THISISAPPC;")[i]) continue;
                     await Task.Run(() => Thread.Sleep(10));
                     n++;
-                    Echo("###");
                 }
                 NewLine();
                 if (n == 8)
                     Echo("Completed check"); NewLine();
-                Echo("Checking size"); NewLine();
+                Echo("Checking disk size"); NewLine();
             }
             Extract();
             await Task.Run(() => Thread.Sleep(1000));
@@ -536,15 +458,12 @@ namespace Teknomli
             _cursorPosition = 0;
             _defaultInput = "";
             _defaultOutput = "";
-            //Bitmapを作成
-            _backbmp = new Bitmap(back.Width, back.Height);
-            //セット
-            back.Image = _backbmp;
+            CleanScreen();
         }
 
         /// <summary>
         /// 起動
-        /// </summary>
+        /// </summary>6
         private void Init()
         {
             _outputLineCount = 0;
@@ -552,7 +471,8 @@ namespace Teknomli
             _defaultOutput = "";
             Echo("------------------------------------------------------------"); NewLine();
             Echo("Horai OS 彩"); NewLine();
-            Echo("Copyright (c) FrozenWhite.net"); NewLine();
+            Echo("Copyright (c) FrozenWhite.net (BlueAlice)"); NewLine();
+            Echo("GraAp DOS ver0.0.1"); NewLine();
             Echo("------------------------------------------------------------"); NewLine();
             _isConsole = true;
             //カーソルの点滅
@@ -577,7 +497,7 @@ namespace Teknomli
         /// run
         /// </summary>
         /// <param name="commands">コマンド(例:echo test)</param>
-        private async void RunCommand(string commands)
+        private void RunCommand(string commands)
         {
             var cmd = commands.Split(' ');
             switch (cmd[0].ToLower())
@@ -590,55 +510,50 @@ namespace Teknomli
                     var str = "";
                     for (int i = 1; i < cmd.Length; i++)
                         str += cmd[i] + " ";
-                    var rsl = str.Remove(0, str.IndexOf("'", StringComparison.Ordinal) + 1);
-                    rsl = rsl.Remove(rsl.IndexOf("'", StringComparison.Ordinal));
-                    if (rsl.Length <= str.Length)
-                        Echo(rsl);
+                    var rsl = str;
+
+                    rsl = rsl.Remove(0, 1);
+                    rsl = rsl.Remove(rsl.Length - 2, 1);
+                    Debug.WriteLine(rsl);
+                    Echo(rsl);
                     break;
                 case "draw":
                     switch (cmd[1].ToLower())
                     {
                         case "pie":
-                            BitmapData render1bmpdat1 = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-                            GraphicsManager.FillPie(ref render1bmpdat1, Color.White, 0, 0, 50, 70, 0, 20);
-                            _render1Bmp.UnlockBits(render1bmpdat1);
-                            render1.Image = _render1Bmp;
+                            GraphicsManager.FillPie(this._render1BmpData, Color.White, 0, 0, 50, 70, 0, 2);
+                            break;
+                        case "rect":
+                            GraphicsManager.FillRectangle(this._render1BmpData, Color.White, 0, 0, 50, 70);
                             break;
                         case "line":
-                            string value = "(10,10)";
-                            string strValue = value.Remove(0, value.IndexOf("(", StringComparison.Ordinal) + 1);
-                            strValue = strValue.Remove(strValue.IndexOf(")", StringComparison.Ordinal));
-                            Debug.WriteLine(strValue);
+                            GraphicsManager.DrawLine(this._render1BmpData, Color.White, 100, 100, 200, 250);
                             break;
                         case "circle":
-                            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-                            GraphicsManager.FillEllipse(ref render1bmpdat, Color.White, 0, 0, 50, 50);
-                            _render1Bmp.UnlockBits(render1bmpdat);
-                            render1.Image = _render1Bmp;
+                            GraphicsManager.FillEllipse(this._render1BmpData, Color.White, 0, 0, 50, 50);
                             break;
                         case "onmyou":
-                            BitmapData _render3BitmapData = _render3Bmp!.LockBits(new Rectangle(0, 0, _render3Bmp.Width, _render3Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
                             for (int x = 0; x < _render3Bmp.Width; x++)
                             {
                                 for (int y = 0; y < _render3Bmp.Height; y++)
                                 {
-                                    BitmapDataEx.SetPixel(_render3BitmapData, x, y, Color.Green);
+                                    BitmapDataEx.SetPixel(this._render3BmpData, x, y, Color.Green);
                                 }
                             }
-                            this._render3Bmp.UnlockBits(_render3BitmapData);
-                            this.render3.Image = _render3Bmp;
+
                             int r = 35;
-                            using (Graphics g = Graphics.FromImage(this._render2Bmp))
-                            {
-                                g.FillEllipse(Brushes.Black, 0, 0, r, r);
-                                g.FillPie(Brushes.White, 0, 0, r, r, 270, 180);
-                                g.FillEllipse(Brushes.White, r / 3, 0, r / 2 + 1, r / 2 + 1);
-                                g.FillEllipse(Brushes.Black, r / 3, r / 2, r / 2 + 1, r / 2 + 1);
-                                g.FillEllipse(Brushes.White, (int)(r / 2.5), (int)(r / 1.5), r / 5, r / 5);
-                                g.FillEllipse(Brushes.Black, (int)(r / 2.5), (int)(r / 4.5), r / 5, r / 5);
-                            }
+                            GraphicsManager.FillEllipse(this._render3BmpData, Color.Black, 0, 0, r, r);
+                            GraphicsManager.FillPie(this._render3BmpData, Color.White, 0, 0, r, r, 180, 360);
+                            GraphicsManager.FillEllipse(this._render3BmpData, Color.White, r / 2, 0, r / 2 + 1, r / 2 + 1);
+                            GraphicsManager.FillEllipse(this._render3BmpData, Color.Black, r / 2, r + 2, r / 2, r / 2);
+                            GraphicsManager.FillEllipse(this._render3BmpData, Color.Black, (int)(r / 1.3), r / 3, r / 5, r / 5);
+                            GraphicsManager.FillEllipse(this._render3BmpData, Color.White, (int)(r / 1.3), (int)(r / 0.75), r / 5, r / 5);
+                            this._render3Bmp.UnlockBits(this._render3BmpData);
+                            this.render3.Image = _render3Bmp;
+                            SetEvent("clean;console=true", "key down 13");
                             break;
                     }
+
                     break;
                 case "clean":
                     CleanScreen();
@@ -650,10 +565,19 @@ namespace Teknomli
             }
         }
 
+        #region スクリプト
         private void SetEvent(string runScript, string trigger)
         {
 
         }
+
+        private void RemoveEvent(string trigger)
+        {
+
+        }
+        #endregion
+
+
         private void RunApplication(string name)
         {
             _cursorFlash!.Stop();
@@ -674,16 +598,14 @@ namespace Teknomli
             _cursorPosition = 0;
             _defaultInput = "";
             _defaultOutput = "";
-            //Bitmapを作成
-            _backbmp = new Bitmap(back.Width, back.Height);
-            _render1Bmp = new Bitmap(render1.Width, render1.Height);
-            _render2Bmp = new Bitmap(render2.Width, render2.Height);
-            _render3Bmp = new Bitmap(render3.Width, render3.Height);
-            //セット
-            back.Image = _backbmp;
-            render1.Image = _render1Bmp;
-            render2.Image = _render2Bmp;
-            render3.Image = _render3Bmp;
+
+            for (int x = 0; x < _backBmpData.Width; x++)
+            {
+                for (int y = 0; y < _backBmpData.Height; y++)
+                {
+                    BitmapDataEx.SetPixel(this._backBmpData, x, y, Color.FromArgb(0, 0, 0, 0));
+                }
+            }
             _isConsole = true;
             if (_cursorFlash != null)
                 _cursorFlash.Start();
@@ -699,6 +621,8 @@ namespace Teknomli
                 case 2:
                     break;
                 case 3:
+                    break;
+                case 4:
                     break;
             }
         }
@@ -718,50 +642,54 @@ namespace Teknomli
             Bitmap cirblue = new Bitmap(@"D:\Downloads\circleblue.bmp");
             Bitmap cirred = new Bitmap(@"D:\Downloads\circlered.bmp");
             BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData backbmpdat = _backBmp!.LockBits(new Rectangle(0, 0, _backBmp.Width, _backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
             BitmapData bluecircleData = cirblue.LockBits(new Rectangle(0, 0, cirblue.Width, cirblue.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             BitmapData redcircleData = cirred.LockBits(new Rectangle(0, 0, cirred.Width, cirred.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             for (float i = 0; i < 361; i++)
             {
-                if (i % 10 == 0 && minrad <= i && i <= maxrad)
+                if (i % 10 != 0 || !(minrad <= i) || !(i <= maxrad))
                 {
-                    for (int x = 0; x < 16; x++)
+                    continue;
+                }
+
+                for (int x = 0; x < 16; x++)
+                {
+                    for (int y = 0; y < 16; y++)
                     {
-                        for (int y = 0; y < 16; y++)
+                        Color circleblu = BitmapDataEx.GetPixel(bluecircleData, x, y);
+                        Color circlered = BitmapDataEx.GetPixel(redcircleData, x, y);
+                        if (circleblu == Color.FromArgb(255, 0, 0, 0))
                         {
-                            Color circleblu = BitmapDataEx.GetPixel(bluecircleData, x, y);
-                            Color circlered = BitmapDataEx.GetPixel(redcircleData, x, y);
-                            if (circleblu != Color.FromArgb(255, 0, 0, 0))
+                            continue;
+                        }
+
+                        float xl = (float)(Math.Cos(Math.PI * 2 / 360 * i) * (n) + pt.X + x);
+                        float yl = (float)(Math.Sin(Math.PI * 2 / 360 * i) * (n) + pt.Y + y);
+                        if (del)
+                        {
+                            BitmapDataEx.SetPixel(isred ? render1bmpdat : backbmpdat, (int)xl, (int)yl,
+                                Color.FromArgb(0));
+                        }
+                        else
+                        {
+                            if (circleblu == Color.FromArgb(255, 0, 0, 0))
                             {
-                                float xl = (float)(Math.Cos(Math.PI * 2 / 360 * i) * (n) + pt.X + x);
-                                float yl = (float)(Math.Sin(Math.PI * 2 / 360 * i) * (n) + pt.Y + y);
-                                if (del)
-                                {
-                                    if (isred)
-                                        BitmapDataEx.SetPixel(render1bmpdat, (int)xl, (int)yl, Color.FromArgb(0));
-                                    else
-                                        BitmapDataEx.SetPixel(backbmpdat, (int)xl, (int)yl, Color.FromArgb(0));
-                                }
-                                else
-                                {
-                                    if (circleblu != Color.FromArgb(255, 0, 0, 0))
-                                    {
-                                        if (isred)
-                                            BitmapDataEx.SetPixel(render1bmpdat, (int)xl, (int)yl, circlered);
-                                        else
-                                            BitmapDataEx.SetPixel(backbmpdat, (int)xl, (int)yl, circleblu);
-                                    }
-                                }
+                                continue;
                             }
+
+                            if (isred)
+                                BitmapDataEx.SetPixel(render1bmpdat, (int)xl, (int)yl, circlered);
+                            else
+                                BitmapDataEx.SetPixel(backbmpdat, (int)xl, (int)yl, circleblu);
                         }
                     }
                 }
             }
             cirblue.UnlockBits(bluecircleData);
-            _backbmp.UnlockBits(backbmpdat);
+            _backBmp.UnlockBits(backbmpdat);
             _render1Bmp.UnlockBits(render1bmpdat);
-            back.Image = _backbmp;
+            back.Image = _backBmp;
             _render1Bmp!.MakeTransparent(Color.Black);
             _render2Bmp!.MakeTransparent(Color.Black);
             _render3Bmp!.MakeTransparent(Color.Black);
@@ -771,17 +699,107 @@ namespace Teknomli
 
         #endregion
         #region 描画
+
+        private bool _isBackBmpLocked = false;
+        private void Update(object? sender, ElapsedEventArgs e)
+        {
+            if (this._backBmpData == null || this._backBmp == null)
+            {
+                return;
+            }
+
+            if (_isBackBmpLocked)
+            {
+                return;
+            }
+            BitmapData backbmpdat = this._backBmp.LockBits(new Rectangle(0, 0, this._backBmp.Width, this._backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            _isBackBmpLocked = true;
+            for (int y = 0; y < backbmpdat.Height; y++)
+            {
+                for (int x = 0; x < backbmpdat.Width; x++)
+                {
+                    unsafe
+                    {
+                        byte* src = (byte*)this._backBmpData.Scan0;
+                        int srcPos = x * 4 + this._backBmpData.Stride * y;
+                        byte* dst = (byte*)backbmpdat.Scan0;
+                        int dstPos = x * 4 + backbmpdat.Stride * y;
+                        dst[dstPos + 0] = src[srcPos + 0];
+                        dst[dstPos + 1] = src[srcPos + 1];
+                        dst[dstPos + 2] = src[srcPos + 2];
+                        dst[dstPos + 3] = src[srcPos + 3];
+                    }
+                }
+            }
+            this._backBmp.UnlockBits(backbmpdat);
+            _isBackBmpLocked = false;
+            this.back.Image = this._backBmp;
+        }
+
         /// <summary>
         /// 指定された文字をコンソールに出力する
         /// </summary>
         /// <param name="str">出力する文字</param>
         private void Echo(string str)
         {
-            foreach (var chr in str)
+            _cursorFlash?.Stop();
+            foreach (char chr in str)
             {
-                SetLetter(chr, Color.White, Color.Black);
+                switch (chr)
+                {
+                    //空欄だったらそのまま
+                    case ' ':
+                        {
+                            for (int x = 0; x < LetterWidth; x++)
+                            {
+                                for (int y = 0; y < LetterHeight; y++)
+                                {
+                                    if (this._backBmpData != null)
+                                    {
+                                        BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * templlc) + 2, y + (LetterHeight * _outputLineCount), Color.Black);
+                                    }
+                                }
+                            }
+                            _lineLetterCount++;
+                            templlc++;
+                            break;
+                        }
+                    //改行は単純に行を増やすだけ
+                    case '\n':
+                        {
+                            NewLine();
+                            break;
+                        }
+                    //その他の文字は描画
+                    default:
+                        {
+                            //文字ファイルを読み込み
+                            BitmapData fontdata = _fonts[IFont.ConvertHoraiFontCode(chr)];
+                            //Bitmapを直接操作
+                            for (int x = 0; x < fontdata.Width; x++)
+                            {
+                                for (int y = 0; y < fontdata.Height; y++)
+                                {
+                                    if (this._backBmpData != null)
+                                    {
+                                        BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * templlc),
+                                            y + (LetterHeight * _outputLineCount),
+                                            BitmapDataEx.GetPixel(fontdata, x, y) != Color.FromArgb(255, 0, 0, 0)
+                                                ? Color.White
+                                                : Color.Black);
+                                    }
+                                }
+                            }
+                            _lineLetterCount++;
+                            templlc++;
+                            break;
+                        }
+                }
+                //標準出力に書き込み
+                _defaultOutput += chr.ToString();
                 _cursorPosition++;
             }
+            _cursorFlash?.Start();
         }
 
         /// <summary>
@@ -802,96 +820,32 @@ namespace Teknomli
         private bool _isTempReturn;
         private int templlc;
         private int tempcur;
-        /// <summary>
-        /// 指定されたcharを出力する
-        /// </summary>
-        /// <param name="letter">出力するChar</param>
-        /// <param name="LetterColor"></param>
-        internal void SetLetter(char letter, Color LetterColor, Color backColor, int lx = -1, int ly = -1)
-        {
-            _cursorFlash?.Stop();
-            //charをstringに変換
-            var ltr = letter.ToString();
-            _outputedLetters!.Add("");
-            _outputedLetters[_outputLineCount] = _outputedLetters[_outputLineCount].Insert(0, ltr);
-            //Letter.ReplaceLetters(ref ltr);
-            if (_defaultInput.Length * LetterWidth > _backbmp!.Width - (LetterWidth / 2) && !_isTempReturn)
-            {
-                _outputLineCount++;
-                templlc = 0;
-                tempcur = 0;
-                _isTempReturn = true;
-            }
-            BitmapData backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            switch (ltr)
-            {
-                //空欄だったらそのまま
-                case " ":
-                    {
-                        for (var x = 0; x < LetterWidth; x++)
-                        {
-                            for (var y = 0; y < LetterHeight; y++)
-                            {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * templlc) + 2, y + (LetterHeight * _outputLineCount), backColor);
-                            }
-                        }
-                        _lineLetterCount++;
-                        templlc++;
-                        break;
-                    }
-                //改行は単純に行を増やすだけ
-                case "\n":
-                    {
-                        NewLine();
-                        break;
-                    }
-                //その他の文字は描画
-                default:
-                    {
-                        //文字ファイルを読み込み
-                        BitmapData fontdata = _fonts[Letter.ConvertLetterCode(ltr)];
-                        //Bitmapを直接操作
-                        for (var x = 0; x < fontdata.Width; x++)
-                        {
-                            for (var y = 0; y < fontdata.Height; y++)
-                            {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * templlc),
-                                    y + (LetterHeight * _outputLineCount),
-                                    BitmapDataEx.GetPixel(fontdata, x, y) != Color.FromArgb(255, 0, 0, 0)
-                                        ? LetterColor
-                                        : backColor);
-                            }
-                        }
-                        _lineLetterCount++;
-                        templlc++;
-                        break;
-                    }
-            }
-            //標準出力に書き込み
-            _defaultOutput += letter.ToString();
-            //解放
-            _backbmp.UnlockBits(backbmpdat);
-            //描画
-            back.Image = _backbmp;
-            _cursorFlash?.Start();
-        }
         #endregion
         #region イベント
         #region Main
         private void Main_Load(object sender, EventArgs e)
         {
+            this.TopMost = true;
+            this.BringToFront();
+            this.TopMost = false;
+            this.Focus();
             Start();
         }
 
         //終了処理をここに記入
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //UnLoadDefaultFonts();
+            this._backBmpTmp.UnlockBits(this._backBmpData);
+            this._render1BmpTmp.UnlockBits(this._render1BmpData);
+            this._render2BmpTmp.UnlockBits(this._render2BmpData);
+            this._render3BmpTmp.UnlockBits(this._render3BmpData);
             Marshal.FreeHGlobal(mem);
         }
         #endregion
 
         #region キーボードイベント
+
+        private int curPos = 0;
         private async void Main_KeyDown(object sender, KeyEventArgs e)
         {
             if (_isConsole)
@@ -899,104 +853,104 @@ namespace Teknomli
                 //点滅の一時停止
                 _cursorFlash!.Stop();
                 await Task.Run(() => Thread.Sleep(1));
-                BitmapData? backbmpdat = null;
-                try
+                if (this._isFlashed)
                 {
-                    backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
                     //カーソルの削除
-                    if (_lineLetterCount == tempcur || _defaultInput == "")
+                    if (this._lineLetterCount == this.tempcur || this._defaultInput == "")
                     {
                         for (int x = 0; x < LetterWidth; x++)
                         {
                             for (int y = 0; y < LetterHeight; y++)
                             {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * tempcur), y + (LetterHeight * _outputLineCount), Color.FromArgb(0));
+                                if (this._backBmpData != null)
+                                {
+                                    BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * (this.tempcur)),
+                                        y + (LetterHeight * this._outputLineCount), Color.FromArgb(0));
+                                }
                             }
                         }
                     }
                     else
                     {
-                        var ltr = _defaultInput[_cursorPosition].ToString();
-                        //記号とかを置き換え
-                        //Letter.ReplaceLetters(ref ltr);
-                        BitmapData fontdata = _fonts[Letter.ConvertLetterCode(ltr)];
-                        for (int x = 0; x < LetterWidth; x++)
+                        char ltr = this._defaultInput[this._cursorPosition];
+                        int code = IFont.ConvertHoraiFontCode(ltr);
+                        if (code <= 0)
                         {
-                            for (int y = 0; y < LetterHeight; y++)
+                            BitmapData fontdata = this._fonts[code];
+                            for (int x = 0; x < LetterWidth; x++)
                             {
-                                if (BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
+                                for (int y = 0; y < LetterHeight; y++)
                                 {
-                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * tempcur), y + (LetterHeight * _outputLineCount), Color.White);
-                                }
-                                else
-                                {
-                                    BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * tempcur), y + (LetterHeight * _outputLineCount), Color.Black);
+                                    if (this._backBmpData == null)
+                                    {
+                                        continue;
+                                    }
+
+                                    BitmapDataEx.SetPixel(this._backBmpData, x + this.curPos,
+                                        y + (LetterHeight * this._outputLineCount),
+                                        BitmapDataEx.GetPixel(fontdata, x, y) ==
+                                        Color.FromArgb(255, 255, 255, 255)
+                                            ? Color.White
+                                            : Color.Black);
                                 }
                             }
                         }
                     }
-                    _isFlashed = false;
+                    this._isFlashed = false;
                 }
-                finally
+
+                byte? keyCode = Keyboard.Translate(e.KeyCode, false, e.Shift, e.Control, e.Alt);
+                switch (keyCode)
                 {
-                    if (backbmpdat != null)
-                    {
-                        _backbmp!.UnlockBits(backbmpdat);
-                        back.Image = _backbmp;
-                    }
-                }
-                var str = Letter.ConvertKeyCode(e.KeyCode, e.Shift);
-                switch (str)
-                {
-                    case "enter":
+                    case 3 when this._cursorPosition != 0:
+                        this._cursorPosition--;
+                        this.tempcur--;
+                        break;
+                    case 4 when this._cursorPosition != this._lineLetterCount:
+                        this._cursorPosition++;
+                        this.tempcur++;
+                        break;
+                    case 11:
                         {
-                            if (_defaultInput != "")
-                                RunCommand(_defaultInput);
-                            NewLine();
+                            if (this._defaultInput != "")
+                                this.RunCommand(this._defaultInput);
+                            this.NewLine();
                             break;
                         }
-                    case "left" when _cursorPosition != 0:
-                        _cursorPosition--;
-                        tempcur--;
-                        break;
-                    case "right" when _cursorPosition != _lineLetterCount:
-                        _cursorPosition++;
-                        tempcur++;
-                        break;
-                    case "back":
-                        _defaultInput = _defaultInput.Remove(_cursorPosition - 1, 1);
-                        Debug.WriteLine(this._defaultInput);
-                        var oldcurpt = _cursorPosition;
-                        _lineLetterCount = 0;
-                        templlc = 0;
-                        tempcur = 0;
-                        _cursorPosition = 0;
-                        Echo(new string(' ', this._defaultInput.Length + 1));
+                }
+
+                if (keyCode == 14 && _cursorPosition != 0)
+                {
+                    _defaultInput = _defaultInput.Remove(_cursorPosition - 1, 1);
+                    var oldcurpt = _cursorPosition;
+                    _lineLetterCount = 0;
+                    templlc = 0;
+                    tempcur = 0;
+                    _cursorPosition = 0;
+                    Echo(new string(' ', this._defaultInput.Length + 2));
+                    _lineLetterCount = 0;
+                    templlc = 0;
+                    tempcur = 0;
+                    _cursorPosition = 0;
+                    Echo(_defaultInput);
+                    _cursorPosition = oldcurpt - 1;
+                    tempcur = _cursorPosition;
+                }
+                else
+                {
+                    var horaiFontCode = IFont.TranslateKeyCode(keyCode);
+                    if (horaiFontCode != null)
+                    {
+                        _defaultInput = _defaultInput.Insert(_cursorPosition, IFont.ConvertChar((int)horaiFontCode).ToString());
+                        var oldCurP = _cursorPosition;
                         _lineLetterCount = 0;
                         templlc = 0;
                         tempcur = 0;
                         _cursorPosition = 0;
                         Echo(_defaultInput);
-                        _cursorPosition = oldcurpt - 1;
+                        _cursorPosition = oldCurP + 1;
                         tempcur = _cursorPosition;
-                        break;
-                    default:
-                        {
-                            if (str.Length == 1)
-                            {
-                                char ltr = str[0];
-                                _defaultInput = _defaultInput.Insert(_cursorPosition, ltr.ToString());
-                                var oldCurP = _cursorPosition;
-                                _lineLetterCount = 0;
-                                templlc = 0;
-                                tempcur = 0;
-                                _cursorPosition = 0;
-                                Echo(_defaultInput);
-                                _cursorPosition = oldCurP + 1;
-                                tempcur = _cursorPosition;
-                            }
-                            break;
-                        }
+                    }
                 }
                 _cursorFlash.Start();
             }
@@ -1018,21 +972,26 @@ namespace Teknomli
         //描画するときは必ず止めること
         private void CursorFlash_Elapsed(object sender, ElapsedEventArgs e)
         {
-            BitmapData backbmpdat;
-            //Bitmapを直接操作
-            backbmpdat = _backbmp!.LockBits(new Rectangle(0, 0, _backbmp.Width, _backbmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            if (_lineLetterCount == _cursorPosition || _defaultInput == "")
+            if (!this._isConsole)
             {
-                if (!_isFlashed)
+                return;
+            }
+
+            if (this._lineLetterCount == this._cursorPosition || this._defaultInput == "")
+            {
+                if (!this._isFlashed)
                 {
                     for (int x = 0; x < LetterWidth; x++)
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + ((LetterHeight) * _outputLineCount), Color.White);
+                            if (this._backBmpData != null)
+                            {
+                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur), y + ((LetterHeight) * this._outputLineCount), Color.White);
+                            }
                         }
                     }
-                    _isFlashed = true;
+                    this._isFlashed = true;
                 }
                 else
                 {
@@ -1040,34 +999,39 @@ namespace Teknomli
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + ((LetterHeight) * _outputLineCount), Color.Black);
+                            if (this._backBmpData != null)
+                            {
+                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
+                                    y + ((LetterHeight) * this._outputLineCount), Color.Black);
+                            }
                         }
                     }
-                    _isFlashed = false;
+                    this._isFlashed = false;
                 }
             }
             else
             {
-                var ltr = _defaultInput[_cursorPosition].ToString();
-                //Letter.ReplaceLetters(ref ltr);
-                BitmapData fontdata = _fonts[Letter.ConvertLetterCode(ltr)];
-                if (!_isFlashed)
+                char ltr = this._defaultInput[this.tempcur];
+                BitmapData fontdata = this._fonts[IFont.ConvertHoraiFontCode(ltr)];
+                if (!this._isFlashed)
                 {
                     for (int x = 0; x < LetterWidth; x++)
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            if (BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
+                            if (this._backBmpData != null)
                             {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
-                            }
-                            else
-                            {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
+                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
+                                    y + (LetterHeight * this._outputLineCount),
+                                    BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255)
+                                        ? Color.Black
+                                        : Color.White);
                             }
                         }
                     }
-                    _isFlashed = true;
+
+                    this.curPos = (LetterWidth * this.tempcur);
+                    this._isFlashed = true;
                 }
                 else
                 {
@@ -1075,22 +1039,19 @@ namespace Teknomli
                     {
                         for (int y = 0; y < LetterHeight; y++)
                         {
-                            if (BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255))
+                            if (this._backBmpData != null)
                             {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.White);
-                            }
-                            else
-                            {
-                                BitmapDataEx.SetPixel(backbmpdat, x + (LetterWidth * _cursorPosition), y + (LetterHeight * _outputLineCount), Color.Black);
+                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
+                                    y + (LetterHeight * this._outputLineCount),
+                                    BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255)
+                                        ? Color.White
+                                        : Color.Black);
                             }
                         }
                     }
-                    _isFlashed = false;
+                    this._isFlashed = false;
                 }
             }
-            if (backbmpdat != null)
-                _backbmp.UnlockBits(backbmpdat);
-            back.Image = _backbmp;
         }
         #endregion
         #endregion
