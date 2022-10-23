@@ -6,9 +6,7 @@ using System.Text;
 using System.Drawing.Imaging;
 using Teknomli.Properties;
 using Timer = System.Timers.Timer;
-using System.Threading.Tasks;
-using System.Security.Cryptography;
-using System.Xml.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Teknomli
 {
@@ -51,7 +49,7 @@ namespace Teknomli
         private const int LetterHeight = 14;
 
         #region カラーパレット
-        private readonly List<Color> pallet = new List<Color>();
+        private readonly List<Color> pallet = new();
         #endregion
         #endregion
         #region 変数
@@ -71,62 +69,62 @@ namespace Teknomli
         /// <summary>
         /// Back用のBitmap
         /// </summary>
-        private Bitmap? _backBmpTmp;
+        private Bitmap _backBmpTmp;
 
         /// <summary>
         /// Render1用のBitmapの一時確保
         /// </summary>
-        private Bitmap? _render1BmpTmp;
+        private Bitmap _render1BmpTmp;
 
         /// <summary>
         /// Render2用のBitmapの一時確保
         /// </summary>
-        private Bitmap? _render2BmpTmp;
+        private Bitmap _render2BmpTmp;
 
         /// <summary>
         /// Render3用のBitmapの一時確保
         /// </summary>
-        private Bitmap? _render3BmpTmp;
+        private Bitmap _render3BmpTmp;
 
         /// <summary>
         /// Back用のBitmap
         /// </summary>
-        private Bitmap? _backBmp;
+        private Bitmap _backBmp;
 
         /// <summary>
         /// Render1用のBitmap
         /// </summary>
-        private Bitmap? _render1Bmp;
+        private Bitmap _render1Bmp;
 
         /// <summary>
         /// Render2用のBitmap
         /// </summary>
-        private Bitmap? _render2Bmp;
+        private Bitmap _render2Bmp;
 
         /// <summary>
         /// Render3用のBitmap
         /// </summary>
-        private Bitmap? _render3Bmp;
+        private Bitmap _render3Bmp;
 
         /// <summary>
         /// Back用のBitmapData
         /// </summary>
-        private BitmapData? _backBmpData;
+        private BitmapData _backBmpData;
 
         /// <summary>
         /// Render1用のBitmapData
         /// </summary>
-        private BitmapData? _render1BmpData;
+        private BitmapData _render1BmpData;
 
         /// <summary>
         /// Render2用のBitmapData
         /// </summary>
-        private BitmapData? _render2BmpData;
+        private BitmapData _render2BmpData;
 
         /// <summary>
         /// Render3用のBitmapData
         /// </summary>
-        private BitmapData? _render3BmpData;
+        private BitmapData _render3BmpData;
 
         /// <summary>
         /// 一行にある文字数
@@ -161,7 +159,7 @@ namespace Teknomli
         /// <summary>
         /// カーソルを点滅させる用
         /// </summary>
-        private Timer? _cursorFlash;
+        private Timer _cursorFlash;
 
         /// <summary>
         /// コンソール画面かどうか
@@ -182,18 +180,29 @@ namespace Teknomli
         [DllImport("winmm.dll")]
         public static extern int timeBeginPeriod(int uuPeriod);
 
-        [DllImport("kernel32.dll")]
-        public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
 
-        private Timer updater;
+            public static implicit operator Point(POINT point)
+            {
+                return new Point(point.X, point.Y);
+            }
+        }
+        [DllImport("User32.dll")]
+        static extern bool GetCursorPos(out POINT lppoint);
+
         #endregion
+        private Timer _updater;
+        private Timer _watcher;
         #region コンストラクタ
         public Main()
         {
-            InitializeComponent();
-            this.Text = $@"{ProductName} v{ProductVersion}";
+            this.InitializeComponent();
             _fonts = new[]
-{
+            {
                 #region Number
                 fonts._0.LockBits(new Rectangle(0, 0, fonts._0.Width, fonts._0.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
                 fonts._1.LockBits(new Rectangle(0, 0, fonts._1.Width, fonts._1.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
@@ -333,20 +342,44 @@ namespace Teknomli
                 fonts.sai.LockBits(new Rectangle(0, 0, fonts.sai.Width, fonts.sai.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb),
 				#endregion
             };
+            //Bitmapを作成
+            this._backBmp = new Bitmap(back.Width, back.Height);
+            this._render1Bmp = new Bitmap(render1.Width, render1.Height);
+            this._render2Bmp = new Bitmap(render2.Width, render2.Height);
+            this._render3Bmp = new Bitmap(render3.Width, render3.Height);
 
-            this.render1.Parent = render2;
-            this.render2.Parent = render3;
-            this.render3.Parent = back;
-            this.render1.Dock = DockStyle.Fill;
-            this.render2.Dock = DockStyle.Fill;
-            this.render3.Dock = DockStyle.Fill;
-            this.back.Dock = DockStyle.Fill;
-            this.updater = new Timer
-            {
-                Interval = 80
-            };
-            this.updater.Elapsed += Update;
+            #region BitmapData
+            this._backBmpTmp = new Bitmap(back.Width, back.Height);
+            this._render1BmpTmp = new Bitmap(render1.Width, render1.Height);
+            this._render2BmpTmp = new Bitmap(render2.Width, render2.Height);
+            this._render3BmpTmp = new Bitmap(render3.Width, render3.Height);
 
+            this._backBmpData = this._backBmpTmp.LockBits(new Rectangle(0, 0, this._backBmp.Width, this._backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            this._render1BmpData = this._render1BmpTmp.LockBits(new Rectangle(0, 0, this._render1Bmp.Width, this._render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            this._render2BmpData = this._render2BmpTmp.LockBits(new Rectangle(0, 0, this._render2Bmp.Width, this._render2Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            this._render3BmpData = this._render3BmpTmp.LockBits(new Rectangle(0, 0, this._render3Bmp.Width, this._render3Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            #endregion
+
+            //セット
+            this.back.Image = this._backBmp;
+            this.render1.Image = this._render1Bmp;
+            this.render2.Image = this._render2Bmp;
+            this.render3.Image = this._render3Bmp;
+
+            this._watcher = new Timer(1000);
+            this._watcher.Elapsed += this._watcher_Elapsed;
+            this._watcher.Start();
+            this._updater = new Timer(50);
+            this._updater.Elapsed += Update;
+            //カーソルの点滅
+            this._cursorFlash = new Timer(500);
+            this._cursorFlash.Elapsed += CursorFlash_Elapsed!;
+            this._cursorFlash.Start();
+        }
+
+        private void _watcher_Elapsed(object? sender, ElapsedEventArgs e)
+        {
+            Debug.WriteLine(GetCursorPosition());
         }
 
         public sealed override string Text
@@ -363,65 +396,43 @@ namespace Teknomli
         private async void Start()
         {
             timeBeginPeriod(1);
-            await Task.Run(() => Thread.Sleep(500));
-            //Bitmapを作成
-            this._backBmp = new Bitmap(back.Width, back.Height);
-            this._render1Bmp = new Bitmap(render1.Width, render1.Height);
-            this._render2Bmp = new Bitmap(render2.Width, render2.Height);
-            this._render3Bmp = new Bitmap(render3.Width, render3.Height);
-
-            this._backBmpTmp = new Bitmap(back.Width, back.Height);
-            this._render1BmpTmp = new Bitmap(render1.Width, render1.Height);
-            this._render2BmpTmp = new Bitmap(render2.Width, render2.Height);
-            this._render3BmpTmp = new Bitmap(render3.Width, render3.Height);
-
-            this._backBmpData = this._backBmpTmp.LockBits(new Rectangle(0, 0, this._backBmp.Width, this._backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            this._render1BmpData = this._render1BmpTmp.LockBits(new Rectangle(0, 0, this._render1Bmp.Width, this._render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            this._render2BmpData = this._render2BmpTmp.LockBits(new Rectangle(0, 0, this._render2Bmp.Width, this._render2Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            this._render3BmpData = this._render3BmpTmp.LockBits(new Rectangle(0, 0, this._render3Bmp.Width, this._render3Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-
-            this._render1Bmp.MakeTransparent(Color.Black);
-            this._render2Bmp.MakeTransparent(Color.Black);
-            this._render3Bmp.MakeTransparent(Color.Black);
-            //セット
-            this.back.Image = _backBmp;
-            this.render1.Image = _render1Bmp;
-            this.render2.Image = _render2Bmp;
-            this.render3.Image = _render3Bmp;
+            this.TopMost = true;
+            this.BringToFront();
+            this.Activate();
+            this.TopMost = false;
+            this.Text = $@"{ProductName} v{ProductVersion}";
+            RunScript("echo('test \\ hello');");
+            this.render1.Parent = render2;
+            this.render2.Parent = render3;
+            this.render3.Parent = back;
+            this.render1.Dock = DockStyle.Fill;
+            this.render2.Dock = DockStyle.Fill;
+            this.render3.Dock = DockStyle.Fill;
+            this.back.Dock = DockStyle.Fill;
             this._outputedLetters = new List<string>();
             this._outputedLetters.Add("");
             Audio audio1 = new("YukiLib.dll");
-            await Task.Run(() => audio1.Play(2000, 150, 100, 7));
-            await Task.Run(() => audio1.Play(1000, 150, 100, 7));
-            this.updater.Start();
-            await MemoryCheck();
+            Audio audio2 = new("YukiLib.dll");
+            audio1.Play(1046, 150, 1000, 7);
+            audio2.Play(1760, 150, 1000, 7);
+            this._updater.Start();
+            MemoryCheck();
+            Echo($"MEMORY {memchki / 1024}KB OK");
+            NewLine();
             this.Echo("memory check OK"); NewLine();
             await CheckHeader();
             this.Init();
         }
 
-        private async Task MemoryCheck()
+        int memchki;
+        private void MemoryCheck()
         {
-            int memchki;
-            UInt32 allmemcnt = 655360 + 4063232;
+            UInt32 allmemcnt = 4063232;
             mem = Marshal.AllocHGlobal((int)allmemcnt);
-            var sw = Stopwatch.StartNew();
             for (memchki = 0; memchki < allmemcnt; memchki++)
             {
                 Marshal.WriteByte(mem, memchki, Convert.ToByte(255));
-                if (sw.ElapsedMilliseconds >= 10)
-                {
-                    this.CleanScreen();
-                    Echo($"MEMORY {memchki / 1024}KB OK");
-                    templlc = 0;
-                    _lineLetterCount = 0;
-                    _defaultOutput = "";
-                    sw.Restart();
-                }
             }
-            sw.Stop();
-            Echo($"MEMORY {memchki / 1024}KB OK");
-            NewLine();
         }
 
         /// <summary>
@@ -429,7 +440,7 @@ namespace Teknomli
         /// </summary>
         private async Task CheckHeader()
         {
-            Echo("Version Teknomli x4 Basic"); NewLine();
+            Echo("Teknomli x4 Basic"); NewLine();
             Echo("Copyright (c) FrozenWhite.net"); NewLine();
             //ファイルを開く
             Echo("checking 8bytes"); NewLine();
@@ -444,7 +455,6 @@ namespace Teknomli
                     await Task.Run(() => Thread.Sleep(10));
                     n++;
                 }
-                NewLine();
                 if (n == 8)
                     Echo("Completed check"); NewLine();
                 Echo("Checking disk size"); NewLine();
@@ -475,10 +485,6 @@ namespace Teknomli
             Echo("GraAp DOS ver0.0.1"); NewLine();
             Echo("------------------------------------------------------------"); NewLine();
             _isConsole = true;
-            //カーソルの点滅
-            _cursorFlash = new Timer(500);
-            _cursorFlash.Elapsed += CursorFlash_Elapsed!;
-            _cursorFlash.Start();
         }
 
         /// <summary>
@@ -497,7 +503,7 @@ namespace Teknomli
         /// run
         /// </summary>
         /// <param name="commands">コマンド(例:echo test)</param>
-        private void RunCommand(string commands)
+        private async void RunCommand(string commands)
         {
             var cmd = commands.Split(' ');
             switch (cmd[0].ToLower())
@@ -507,17 +513,17 @@ namespace Teknomli
                     break;
                 case "echo":
                     NewLine();
-                    var str = "";
+                    string str = "";
                     for (int i = 1; i < cmd.Length; i++)
                         str += cmd[i] + " ";
-                    var rsl = str;
-
+                    string rsl = str;
                     rsl = rsl.Remove(0, 1);
                     rsl = rsl.Remove(rsl.Length - 2, 1);
                     Debug.WriteLine(rsl);
                     Echo(rsl);
                     break;
                 case "draw":
+
                     switch (cmd[1].ToLower())
                     {
                         case "pie":
@@ -530,14 +536,34 @@ namespace Teknomli
                             GraphicsManager.DrawLine(this._render1BmpData, Color.White, 100, 100, 200, 250);
                             break;
                         case "circle":
-                            GraphicsManager.FillEllipse(this._render1BmpData, Color.White, 0, 0, 50, 50);
+                            string[] args = cmd[2].Split(';');
+                            string getProperty = args[0].Substring(args[0].IndexOf("(", StringComparison.Ordinal) + 1, args[0].IndexOf(")", StringComparison.Ordinal) - args[0].IndexOf("(", StringComparison.Ordinal) - 1);
+                            string[] points = getProperty.Split(',');
+                            int xc = 0;
+                            int yc = 0;
+                            int csize = 0;
+                            int.TryParse(points[0], out xc);
+                            int.TryParse(points[1], out yc);
+                            int.TryParse(args[1], out csize);
+                            Debug.WriteLine(points[1]);
+                            GraphicsManager.FillEllipse(this._render1BmpData, Color.White, xc, yc, csize, csize);
+                            break;
+                        case "rand":
+                            for (int x = 0; x < this._backBmpData.Width; x++)
+                            {
+                                for (int y = 0; y < this._backBmpData.Height; y++)
+                                {
+                                    BitmapPlus.SetPixel(this._backBmpData, x, y, Color.FromArgb(this.rand.Next(255), this.rand.Next(255), this.rand.Next(255)));
+                                }
+                                await Task.Run(() => Thread.Sleep(1));
+                            }
                             break;
                         case "onmyou":
                             for (int x = 0; x < _render3Bmp.Width; x++)
                             {
                                 for (int y = 0; y < _render3Bmp.Height; y++)
                                 {
-                                    BitmapDataEx.SetPixel(this._render3BmpData, x, y, Color.Green);
+                                    BitmapPlus.SetPixel(this._render3BmpData, x, y, Color.Green);
                                 }
                             }
 
@@ -564,20 +590,6 @@ namespace Teknomli
                     break;
             }
         }
-
-        #region スクリプト
-        private void SetEvent(string runScript, string trigger)
-        {
-
-        }
-
-        private void RemoveEvent(string trigger)
-        {
-
-        }
-        #endregion
-
-
         private void RunApplication(string name)
         {
             _cursorFlash!.Stop();
@@ -587,7 +599,6 @@ namespace Teknomli
         {
 
         }
-
         private void CleanScreen()
         {
             if (_cursorFlash != null)
@@ -598,12 +609,11 @@ namespace Teknomli
             _cursorPosition = 0;
             _defaultInput = "";
             _defaultOutput = "";
-
-            for (int x = 0; x < _backBmpData.Width; x++)
+            for (int x = 0; x < this._backBmpData.Width; x++)
             {
-                for (int y = 0; y < _backBmpData.Height; y++)
+                for (int y = 0; y < this._backBmpData.Height; y++)
                 {
-                    BitmapDataEx.SetPixel(this._backBmpData, x, y, Color.FromArgb(0, 0, 0, 0));
+                    BitmapPlus.SetPixel(this._backBmpData, x, y, Color.FromArgb(0, 0, 0));
                 }
             }
             _isConsole = true;
@@ -639,8 +649,8 @@ namespace Teknomli
         private void drawCircle(Point pt, int n = 5, bool del = false, int minrad = 0, int maxrad = 361, bool isred = false)
         {
             _cursorFlash!.Stop();
-            Bitmap cirblue = new Bitmap(@"D:\Downloads\circleblue.bmp");
-            Bitmap cirred = new Bitmap(@"D:\Downloads\circlered.bmp");
+            Bitmap cirblue = new(@"D:\Downloads\circleblue.bmp");
+            Bitmap cirred = new(@"D:\Downloads\circlered.bmp");
             BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             BitmapData backbmpdat = _backBmp!.LockBits(new Rectangle(0, 0, _backBmp.Width, _backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
@@ -657,8 +667,8 @@ namespace Teknomli
                 {
                     for (int y = 0; y < 16; y++)
                     {
-                        Color circleblu = BitmapDataEx.GetPixel(bluecircleData, x, y);
-                        Color circlered = BitmapDataEx.GetPixel(redcircleData, x, y);
+                        Color circleblu = BitmapPlus.GetPixel(bluecircleData, x, y);
+                        Color circlered = BitmapPlus.GetPixel(redcircleData, x, y);
                         if (circleblu == Color.FromArgb(255, 0, 0, 0))
                         {
                             continue;
@@ -668,7 +678,7 @@ namespace Teknomli
                         float yl = (float)(Math.Sin(Math.PI * 2 / 360 * i) * (n) + pt.Y + y);
                         if (del)
                         {
-                            BitmapDataEx.SetPixel(isred ? render1bmpdat : backbmpdat, (int)xl, (int)yl,
+                            BitmapPlus.SetPixel(isred ? render1bmpdat : backbmpdat, (int)xl, (int)yl,
                                 Color.FromArgb(0));
                         }
                         else
@@ -679,9 +689,9 @@ namespace Teknomli
                             }
 
                             if (isred)
-                                BitmapDataEx.SetPixel(render1bmpdat, (int)xl, (int)yl, circlered);
+                                BitmapPlus.SetPixel(render1bmpdat, (int)xl, (int)yl, circlered);
                             else
-                                BitmapDataEx.SetPixel(backbmpdat, (int)xl, (int)yl, circleblu);
+                                BitmapPlus.SetPixel(backbmpdat, (int)xl, (int)yl, circleblu);
                         }
                     }
                 }
@@ -698,42 +708,123 @@ namespace Teknomli
         }
 
         #endregion
-        #region 描画
-
-        private bool _isBackBmpLocked = false;
-        private void Update(object? sender, ElapsedEventArgs e)
+        #region スクリプト
+        private void SetEvent(string runScript, string trigger)
         {
-            if (this._backBmpData == null || this._backBmp == null)
-            {
-                return;
+
+        }
+
+        private void RemoveEvent(string trigger)
+        {
+
+        }
+
+        private void RunScripts(string path)
+        {
+            /*
+            //ファイルをインポートできるようにする
+            #import('std.fp');
+            #import('sound.fp');
+            #import('graphics.fp');
+            #import('vector.fp');
+            import('my_math.fp');
+
+            //関数は上に書く
+            int:func test(int:a,int:b){
+              return(a*b);
             }
 
-            if (_isBackBmpLocked)
+            //最後にmainを書く
+            void:func main()
             {
-                return;
+              bool test_bool = false;
+              if(test_bool == false)
+              {
+                print_l('test_bool ez' + string([test_bool]));
+              }
+              for (int i; i < 10;i += 2;)
+              {
+                print('i ez >> ' + string([i]));
+              }
+              //くくったときはこうする
+              //インデントはスペースx2
+              print(string([test(2,3)]) + 'test');
+              //非同期処理はasyncをつける
+              async Sound.Play(2000,100);
+              //四角を書く
+              async Graphics.FillRect(1,10,10,100,200);
+              //画像を読み込む
+              async Graphics.SetImage(4,'.\path\test.hif',0,0);
             }
-            BitmapData backbmpdat = this._backBmp.LockBits(new Rectangle(0, 0, this._backBmp.Width, this._backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            _isBackBmpLocked = true;
-            for (int y = 0; y < backbmpdat.Height; y++)
+            */
+        }
+
+        private void CallLibrary()
+        {
+
+        }
+
+        private void RunScript(string script)
+        {
+            string[] methods = { };
+            string getMethod = script.Substring(0, script.IndexOf("(", StringComparison.Ordinal));
+            switch (getMethod)
             {
-                for (int x = 0; x < backbmpdat.Width; x++)
-                {
-                    unsafe
+                case "echo":
+                case "print":
                     {
-                        byte* src = (byte*)this._backBmpData.Scan0;
-                        int srcPos = x * 4 + this._backBmpData.Stride * y;
-                        byte* dst = (byte*)backbmpdat.Scan0;
-                        int dstPos = x * 4 + backbmpdat.Stride * y;
-                        dst[dstPos + 0] = src[srcPos + 0];
-                        dst[dstPos + 1] = src[srcPos + 1];
-                        dst[dstPos + 2] = src[srcPos + 2];
-                        dst[dstPos + 3] = src[srcPos + 3];
+                        string getProperty = script.Substring(script.IndexOf("(", StringComparison.Ordinal) + 1, script.IndexOf(")", StringComparison.Ordinal) - script.IndexOf("(", StringComparison.Ordinal));
+                        string value = "";
+                        for (int i = 0; i < getProperty.Length - 1; i++)
+                        {
+                            if (getProperty[i] == '\\')
+                            {
+                                if (getProperty[i + 1] == '\'')
+                                {
+                                    value += "'";
+                                }
+
+                                if (getProperty[i + 1] == '\\')
+                                {
+                                    value += "\\";
+                                }
+                                i++;
+                                continue;
+                            }
+
+                            value += getProperty[i];
+                        }
+                        Debug.WriteLine(value);
+                        break;
                     }
-                }
             }
-            this._backBmp.UnlockBits(backbmpdat);
-            _isBackBmpLocked = false;
+
+        }
+        #endregion
+        #region 描画
+        private unsafe void Update(object? sender, ElapsedEventArgs e)
+        {
+            #region Back
+            if (this._backBmpData == null || this._backBmp == null) return;
+            using (BitmapDataEx backBitmapDataEx = BitmapDataEx.LockBits(this._backBmp))
+            {
+                BitmapData backBitmapData = backBitmapDataEx.BitmapData;
+                Unsafe.CopyBlock(backBitmapData.Scan0.ToPointer(), this._backBmpData.Scan0.ToPointer(),
+                    (uint)(this._backBmpData.Stride * this._backBmpData.Height));
+            }
             this.back.Image = this._backBmp;
+            #endregion
+
+            #region Render1
+            if (this._render1BmpData == null || this._render1Bmp == null) return;
+            using (BitmapDataEx render1BitmapDataEx = BitmapDataEx.LockBits(this._render1Bmp))
+            {
+                BitmapData render1BitmapData = render1BitmapDataEx.BitmapData;
+                Unsafe.CopyBlock(render1BitmapData.Scan0.ToPointer(), this._render1BmpData.Scan0.ToPointer(), (uint)(this._render1BmpData.Stride * this._render1BmpData.Height));
+            }
+            this.render1.Image = this._render1Bmp;
+            #endregion
+
         }
 
         /// <summary>
@@ -756,7 +847,7 @@ namespace Teknomli
                                 {
                                     if (this._backBmpData != null)
                                     {
-                                        BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * templlc) + 2, y + (LetterHeight * _outputLineCount), Color.Black);
+                                        BitmapPlus.SetPixel(this._backBmpData, x + (LetterWidth * templlc) + 2, y + (LetterHeight * _outputLineCount), Color.Black);
                                     }
                                 }
                             }
@@ -782,9 +873,9 @@ namespace Teknomli
                                 {
                                     if (this._backBmpData != null)
                                     {
-                                        BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * templlc),
+                                        BitmapPlus.SetPixel(this._backBmpData, x + (LetterWidth * templlc),
                                             y + (LetterHeight * _outputLineCount),
-                                            BitmapDataEx.GetPixel(fontdata, x, y) != Color.FromArgb(255, 0, 0, 0)
+                                            BitmapPlus.GetPixel(fontdata, x, y) != Color.FromArgb(255, 0, 0, 0)
                                                 ? Color.White
                                                 : Color.Black);
                                     }
@@ -814,10 +905,8 @@ namespace Teknomli
             _cursorPosition = 0;
             _defaultInput = "";
             _defaultOutput = "";
-            _isTempReturn = false;
         }
 
-        private bool _isTempReturn;
         private int templlc;
         private int tempcur;
         #endregion
@@ -825,21 +914,13 @@ namespace Teknomli
         #region Main
         private void Main_Load(object sender, EventArgs e)
         {
-            this.TopMost = true;
-            this.BringToFront();
-            this.TopMost = false;
-            this.Focus();
             Start();
         }
 
         //終了処理をここに記入
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
-            this._backBmpTmp.UnlockBits(this._backBmpData);
-            this._render1BmpTmp.UnlockBits(this._render1BmpData);
-            this._render2BmpTmp.UnlockBits(this._render2BmpData);
-            this._render3BmpTmp.UnlockBits(this._render3BmpData);
-            Marshal.FreeHGlobal(mem);
+
         }
         #endregion
 
@@ -864,8 +945,8 @@ namespace Teknomli
                             {
                                 if (this._backBmpData != null)
                                 {
-                                    BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * (this.tempcur)),
-                                        y + (LetterHeight * this._outputLineCount), Color.FromArgb(0));
+                                    BitmapPlus.SetPixel(this._backBmpData, x + (LetterWidth * (this.tempcur)),
+                                        y + (LetterHeight * this._outputLineCount), Color.Black);
                                 }
                             }
                         }
@@ -886,9 +967,9 @@ namespace Teknomli
                                         continue;
                                     }
 
-                                    BitmapDataEx.SetPixel(this._backBmpData, x + this.curPos,
+                                    BitmapPlus.SetPixel(this._backBmpData, x + this.curPos,
                                         y + (LetterHeight * this._outputLineCount),
-                                        BitmapDataEx.GetPixel(fontdata, x, y) ==
+                                        BitmapPlus.GetPixel(fontdata, x, y) ==
                                         Color.FromArgb(255, 255, 255, 255)
                                             ? Color.White
                                             : Color.Black);
@@ -987,7 +1068,7 @@ namespace Teknomli
                         {
                             if (this._backBmpData != null)
                             {
-                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur), y + ((LetterHeight) * this._outputLineCount), Color.White);
+                                BitmapPlus.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur), y + ((LetterHeight) * this._outputLineCount), Color.White);
                             }
                         }
                     }
@@ -1001,7 +1082,7 @@ namespace Teknomli
                         {
                             if (this._backBmpData != null)
                             {
-                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
+                                BitmapPlus.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
                                     y + ((LetterHeight) * this._outputLineCount), Color.Black);
                             }
                         }
@@ -1021,9 +1102,9 @@ namespace Teknomli
                         {
                             if (this._backBmpData != null)
                             {
-                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
+                                BitmapPlus.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
                                     y + (LetterHeight * this._outputLineCount),
-                                    BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255)
+                                    BitmapPlus.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255)
                                         ? Color.Black
                                         : Color.White);
                             }
@@ -1041,9 +1122,9 @@ namespace Teknomli
                         {
                             if (this._backBmpData != null)
                             {
-                                BitmapDataEx.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
+                                BitmapPlus.SetPixel(this._backBmpData, x + (LetterWidth * this.tempcur),
                                     y + (LetterHeight * this._outputLineCount),
-                                    BitmapDataEx.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255)
+                                    BitmapPlus.GetPixel(fontdata, x, y) == Color.FromArgb(255, 255, 255, 255)
                                         ? Color.White
                                         : Color.Black);
                             }
@@ -1054,6 +1135,65 @@ namespace Teknomli
             }
         }
         #endregion
+
+        #endregion
+
+        private void Main_Activated(object sender, EventArgs e)
+        {
+            if (this._updater != null)
+            {
+                this._updater.Start();
+            }
+        }
+
+        private void Main_Deactivate(object sender, EventArgs e)
+        {
+            if (this._updater != null)
+            {
+                this._updater.Stop();
+            }
+        }
+
+        private void Main_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            this._updater.Stop();
+            this._cursorFlash.Stop();
+            if (this._backBmpData != null &&
+                this._render1BmpData != null &&
+                this._render2BmpData != null &&
+                this._render3BmpData != null &&
+                this._backBmpTmp != null &&
+                this._render1BmpTmp != null &&
+                this._render2BmpTmp != null &&
+                this._render3BmpTmp != null &&
+                this._backBmp != null &&
+                this._render1Bmp != null &&
+                this._render2Bmp != null &&
+                this._render3Bmp != null)
+            {
+                this._backBmpTmp.UnlockBits(this._backBmpData);
+                this._render1BmpTmp.UnlockBits(this._render1BmpData);
+                this._render2BmpTmp.UnlockBits(this._render2BmpData);
+                this._render3BmpTmp.UnlockBits(this._render3BmpData);
+                this._backBmpTmp.Dispose();
+                this._render1BmpTmp.Dispose();
+                this._render2BmpTmp.Dispose();
+                this._render3BmpTmp.Dispose();
+                this._backBmp.Dispose();
+                this._render1Bmp.Dispose();
+                this._render2Bmp.Dispose();
+                this._render3Bmp.Dispose();
+            }
+            Marshal.FreeHGlobal(this.mem);
+        }
+
+        #region 仮
+        private static Point GetCursorPosition()
+        {
+            POINT lpPoint;
+            GetCursorPos(out lpPoint);
+            return lpPoint;
+        }
         #endregion
     }
 }

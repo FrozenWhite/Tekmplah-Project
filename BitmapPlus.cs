@@ -2,7 +2,49 @@
 
 namespace Teknomli
 {
-    internal static class BitmapDataEx
+    public class BitmapDataEx : IDisposable
+    {
+        private Bitmap _bitmap;
+
+        public BitmapData BitmapData { get; private set; }
+
+        private BitmapDataEx(Bitmap bitmap, BitmapData bitmapData)
+        {
+            this._bitmap = bitmap;
+            this.BitmapData = bitmapData;
+        }
+
+        ~BitmapDataEx()
+        {
+            this.Dispose(false);
+        }
+
+        public static BitmapDataEx LockBits(Bitmap bitmap)
+        {
+            BitmapData bitmapData = bitmap.LockBits(
+                        new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                        ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            return new BitmapDataEx(bitmap, bitmapData);
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing)
+            {
+                return;
+            }
+
+            this._bitmap.UnlockBits(this.BitmapData);
+        }
+    }
+
+    internal static class BitmapPlus
     {
         /// <summary>
         /// BitmapのGetPixel同等

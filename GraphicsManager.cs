@@ -44,7 +44,7 @@ namespace Teknomli
                 int ex = (int)(x + i * Math.Cos(rad));
                 int ey = (int)(y + i * Math.Sin(rad));
                 Debug.WriteLine($"x:{ex},y:{ey}");
-                BitmapDataEx.SetPixel(bmp, ex, ey, col);
+                BitmapPlus.SetPixel(bmp, ex, ey, col);
             }
         }
 
@@ -56,7 +56,7 @@ namespace Teknomli
                 {
                     int dx = xl - width - x + 1;
                     int dy = yl - height - y + 1;
-                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, col);
+                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapPlus.SetPixel(bmp, xl, yl, col);
                 }
             }
         }
@@ -84,7 +84,7 @@ namespace Teknomli
                         }
                         else continue;
                     }
-                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapDataEx.SetPixel(bmp, xl, yl, col);
+                    if ((double)(dx * dx) / (width * width) + (double)(dy * dy) / (height * height) <= 1) BitmapPlus.SetPixel(bmp, xl, yl, col);
                 }
             });
         }
@@ -95,7 +95,7 @@ namespace Teknomli
             {
                 for (int yl = y; yl < y + 50; yl++)
                 {
-                    BitmapDataEx.SetPixel(bmp, xl, yl, col);
+                    BitmapPlus.SetPixel(bmp, xl, yl, col);
                 }
             }
         }

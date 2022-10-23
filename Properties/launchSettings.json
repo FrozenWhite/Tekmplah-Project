@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Teknomli": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

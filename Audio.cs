@@ -24,7 +24,7 @@ namespace Teknomli
 
         public async void Play(float frq, int volume, int playtime, int type)
         {
-            this._audio1?.Invoke(null, new object[] { frq, volume, playtime, type });
+            await Task.Run(() => this._audio1?.Invoke(null, new object[] { frq, volume, playtime, type }));
         }
     }
 }

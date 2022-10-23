@@ -10,11 +10,11 @@
     <Platforms>AnyCPU;x86</Platforms>
     <LangVersion>10</LangVersion>
     <ApplicationIcon>pc.ico</ApplicationIcon>
-    <Version>0.0.4.2</Version>
+    <Version>0.0.4.3</Version>
     <Description>Teknomli x4 Basic Emulator</Description>
     <Copyright>FrozenWhite</Copyright>
     <PackageIcon>pc.png</PackageIcon>
-    <Authors>FrozenWhite</Authors>
+    <Authors>BlueAlice, WhiteAlice</Authors>
     <Title>Teknomli</Title>
     <ErrorReport>none</ErrorReport>
     <IncludeSymbols>False</IncludeSymbols>
@@ -22,6 +22,7 @@
     <StartupObject>Teknomli.Program</StartupObject>
     <UseWPF>False</UseWPF>
 	<PublishSingleFile>true</PublishSingleFile>
+	<Company>FrozenWhite</Company>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
