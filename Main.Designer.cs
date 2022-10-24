@@ -106,7 +106,6 @@ namespace Teknomli
             this.Text = "Teknomli";
             this.Activated += new System.EventHandler(this.Main_Activated);
             this.Deactivate += new System.EventHandler(this.Main_Deactivate);
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Main_FormClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.Load += new System.EventHandler(this.Main_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Main_KeyDown);

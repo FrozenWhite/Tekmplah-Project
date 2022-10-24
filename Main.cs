@@ -173,7 +173,6 @@ namespace Teknomli
 
         private List<string>? _outputedLetters;
 
-        private int returncnt = 0;
         #endregion
         #endregion
         #region C++のインポート
@@ -379,7 +378,7 @@ namespace Teknomli
 
         private void _watcher_Elapsed(object? sender, ElapsedEventArgs e)
         {
-            Debug.WriteLine(GetCursorPosition());
+
         }
 
         public sealed override string Text
@@ -415,6 +414,8 @@ namespace Teknomli
             Audio audio2 = new("YukiLib.dll");
             audio1.Play(1046, 150, 1000, 7);
             audio2.Play(1760, 150, 1000, 7);
+
+            Debug.WriteLine(audio2.hdr.lpData);
             this._updater.Start();
             MemoryCheck();
             Echo($"MEMORY {memchki / 1024}KB OK");
@@ -472,8 +473,8 @@ namespace Teknomli
         }
 
         /// <summary>
-        /// 起動
-        /// </summary>6
+        /// HoraiOSを起動
+        /// </summary>
         private void Init()
         {
             _outputLineCount = 0;
@@ -505,7 +506,7 @@ namespace Teknomli
         /// <param name="commands">コマンド(例:echo test)</param>
         private async void RunCommand(string commands)
         {
-            var cmd = commands.Split(' ');
+            string[] cmd = commands.Split(' ');
             switch (cmd[0].ToLower())
             {
                 case "run":
@@ -519,11 +520,9 @@ namespace Teknomli
                     string rsl = str;
                     rsl = rsl.Remove(0, 1);
                     rsl = rsl.Remove(rsl.Length - 2, 1);
-                    Debug.WriteLine(rsl);
-                    Echo(rsl);
+                    this.Echo(rsl);
                     break;
                 case "draw":
-
                     switch (cmd[1].ToLower())
                     {
                         case "pie":
@@ -536,17 +535,16 @@ namespace Teknomli
                             GraphicsManager.DrawLine(this._render1BmpData, Color.White, 100, 100, 200, 250);
                             break;
                         case "circle":
-                            string[] args = cmd[2].Split(';');
-                            string getProperty = args[0].Substring(args[0].IndexOf("(", StringComparison.Ordinal) + 1, args[0].IndexOf(")", StringComparison.Ordinal) - args[0].IndexOf("(", StringComparison.Ordinal) - 1);
-                            string[] points = getProperty.Split(',');
-                            int xc = 0;
-                            int yc = 0;
-                            int csize = 0;
-                            int.TryParse(points[0], out xc);
-                            int.TryParse(points[1], out yc);
-                            int.TryParse(args[1], out csize);
-                            Debug.WriteLine(points[1]);
-                            GraphicsManager.FillEllipse(this._render1BmpData, Color.White, xc, yc, csize, csize);
+                            if (cmd.Length - 1 <= 2)
+                            {
+                                string[] args = cmd[2].Split(';');
+                                string getProperty = args[0].Substring(args[0].IndexOf("(", StringComparison.Ordinal) + 1, args[0].IndexOf(")", StringComparison.Ordinal) - args[0].IndexOf("(", StringComparison.Ordinal) - 1);
+                                string[] points = getProperty.Split(',');
+                                int.TryParse(points[0], out int xc);
+                                int.TryParse(points[1], out int yc);
+                                int.TryParse(args[1], out int csize);
+                                GraphicsManager.FillEllipse(this._render1BmpData, Color.White, xc, yc, csize, csize);
+                            }
                             break;
                         case "rand":
                             for (int x = 0; x < this._backBmpData.Width; x++)
@@ -598,113 +596,6 @@ namespace Teknomli
         public void Reset()
         {
 
-        }
-        private void CleanScreen()
-        {
-            if (_cursorFlash != null)
-                _cursorFlash.Stop();
-            _isConsole = false;
-            _lineLetterCount = 0;
-            _outputLineCount = -1;
-            _cursorPosition = 0;
-            _defaultInput = "";
-            _defaultOutput = "";
-            for (int x = 0; x < this._backBmpData.Width; x++)
-            {
-                for (int y = 0; y < this._backBmpData.Height; y++)
-                {
-                    BitmapPlus.SetPixel(this._backBmpData, x, y, Color.FromArgb(0, 0, 0));
-                }
-            }
-            _isConsole = true;
-            if (_cursorFlash != null)
-                _cursorFlash.Start();
-        }
-
-        private void SetPixel(Point point, Color color, int layer)
-        {
-            _cursorFlash!.Stop();
-            switch (layer)
-            {
-                case 1:
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    break;
-                case 4:
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pt">左上の基準点</param>
-        /// <param name="n">パーティクルの大きさ</param>
-        /// <param name="del">消すモードにするかどうか</param>
-        /// <param name="minrad">最小のラジアン</param>
-        /// <param name="maxrad">最大のラジアン</param>
-        /// <param name="isred">赤にするかどうか</param>
-        private void drawCircle(Point pt, int n = 5, bool del = false, int minrad = 0, int maxrad = 361, bool isred = false)
-        {
-            _cursorFlash!.Stop();
-            Bitmap cirblue = new(@"D:\Downloads\circleblue.bmp");
-            Bitmap cirred = new(@"D:\Downloads\circlered.bmp");
-            BitmapData render1bmpdat = _render1Bmp!.LockBits(new Rectangle(0, 0, _render1Bmp.Width, _render1Bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData backbmpdat = _backBmp!.LockBits(new Rectangle(0, 0, _backBmp.Width, _backBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-
-            BitmapData bluecircleData = cirblue.LockBits(new Rectangle(0, 0, cirblue.Width, cirblue.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData redcircleData = cirred.LockBits(new Rectangle(0, 0, cirred.Width, cirred.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            for (float i = 0; i < 361; i++)
-            {
-                if (i % 10 != 0 || !(minrad <= i) || !(i <= maxrad))
-                {
-                    continue;
-                }
-
-                for (int x = 0; x < 16; x++)
-                {
-                    for (int y = 0; y < 16; y++)
-                    {
-                        Color circleblu = BitmapPlus.GetPixel(bluecircleData, x, y);
-                        Color circlered = BitmapPlus.GetPixel(redcircleData, x, y);
-                        if (circleblu == Color.FromArgb(255, 0, 0, 0))
-                        {
-                            continue;
-                        }
-
-                        float xl = (float)(Math.Cos(Math.PI * 2 / 360 * i) * (n) + pt.X + x);
-                        float yl = (float)(Math.Sin(Math.PI * 2 / 360 * i) * (n) + pt.Y + y);
-                        if (del)
-                        {
-                            BitmapPlus.SetPixel(isred ? render1bmpdat : backbmpdat, (int)xl, (int)yl,
-                                Color.FromArgb(0));
-                        }
-                        else
-                        {
-                            if (circleblu == Color.FromArgb(255, 0, 0, 0))
-                            {
-                                continue;
-                            }
-
-                            if (isred)
-                                BitmapPlus.SetPixel(render1bmpdat, (int)xl, (int)yl, circlered);
-                            else
-                                BitmapPlus.SetPixel(backbmpdat, (int)xl, (int)yl, circleblu);
-                        }
-                    }
-                }
-            }
-            cirblue.UnlockBits(bluecircleData);
-            _backBmp.UnlockBits(backbmpdat);
-            _render1Bmp.UnlockBits(render1bmpdat);
-            back.Image = _backBmp;
-            _render1Bmp!.MakeTransparent(Color.Black);
-            _render2Bmp!.MakeTransparent(Color.Black);
-            _render3Bmp!.MakeTransparent(Color.Black);
-            render1.Image = _render1Bmp;
-            _cursorFlash.Start();
         }
 
         #endregion
@@ -802,6 +693,45 @@ namespace Teknomli
         }
         #endregion
         #region 描画
+        private void CleanScreen()
+        {
+            if (_cursorFlash != null)
+                _cursorFlash.Stop();
+            _isConsole = false;
+            _lineLetterCount = 0;
+            _outputLineCount = -1;
+            _cursorPosition = 0;
+            _defaultInput = "";
+            _defaultOutput = "";
+            for (int x = 0; x < this._backBmpData.Width; x++)
+            {
+                for (int y = 0; y < this._backBmpData.Height; y++)
+                {
+                    BitmapPlus.SetPixel(this._backBmpData, x, y, Color.FromArgb(0, 0, 0));
+                }
+            }
+            _isConsole = true;
+            if (_cursorFlash != null)
+                _cursorFlash.Start();
+        }
+
+        private void SetPixel(Point point, Color color, int layer)
+        {
+            _cursorFlash.Stop();
+            switch (layer)
+            {
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+            }
+        }
+
+
         private unsafe void Update(object? sender, ElapsedEventArgs e)
         {
             #region Back
@@ -914,19 +844,42 @@ namespace Teknomli
         #region Main
         private void Main_Load(object sender, EventArgs e)
         {
-            Start();
+            this.Start();
         }
 
-        //終了処理をここに記入
-        private void Main_FormClosing(object sender, FormClosingEventArgs e)
+        private void Main_Activated(object sender, EventArgs e)
         {
+            this._updater.Start();
+        }
 
+        private void Main_Deactivate(object sender, EventArgs e)
+        {
+            this._updater.Stop();
+        }
+
+        private void Main_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            this._updater.Stop();
+            this._cursorFlash.Stop();
+            this._backBmpTmp.UnlockBits(this._backBmpData);
+            this._render1BmpTmp.UnlockBits(this._render1BmpData);
+            this._render2BmpTmp.UnlockBits(this._render2BmpData);
+            this._render3BmpTmp.UnlockBits(this._render3BmpData);
+            this._backBmpTmp.Dispose();
+            this._render1BmpTmp.Dispose();
+            this._render2BmpTmp.Dispose();
+            this._render3BmpTmp.Dispose();
+            this._backBmp.Dispose();
+            this._render1Bmp.Dispose();
+            this._render2Bmp.Dispose();
+            this._render3Bmp.Dispose();
+            Marshal.FreeHGlobal(this.mem);
         }
         #endregion
 
         #region キーボードイベント
 
-        private int curPos = 0;
+        private int _curPos;
         private async void Main_KeyDown(object sender, KeyEventArgs e)
         {
             if (_isConsole)
@@ -967,7 +920,7 @@ namespace Teknomli
                                         continue;
                                     }
 
-                                    BitmapPlus.SetPixel(this._backBmpData, x + this.curPos,
+                                    BitmapPlus.SetPixel(this._backBmpData, x + this._curPos,
                                         y + (LetterHeight * this._outputLineCount),
                                         BitmapPlus.GetPixel(fontdata, x, y) ==
                                         Color.FromArgb(255, 255, 255, 255)
@@ -1111,7 +1064,7 @@ namespace Teknomli
                         }
                     }
 
-                    this.curPos = (LetterWidth * this.tempcur);
+                    this._curPos = (LetterWidth * this.tempcur);
                     this._isFlashed = true;
                 }
                 else
@@ -1137,56 +1090,6 @@ namespace Teknomli
         #endregion
 
         #endregion
-
-        private void Main_Activated(object sender, EventArgs e)
-        {
-            if (this._updater != null)
-            {
-                this._updater.Start();
-            }
-        }
-
-        private void Main_Deactivate(object sender, EventArgs e)
-        {
-            if (this._updater != null)
-            {
-                this._updater.Stop();
-            }
-        }
-
-        private void Main_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            this._updater.Stop();
-            this._cursorFlash.Stop();
-            if (this._backBmpData != null &&
-                this._render1BmpData != null &&
-                this._render2BmpData != null &&
-                this._render3BmpData != null &&
-                this._backBmpTmp != null &&
-                this._render1BmpTmp != null &&
-                this._render2BmpTmp != null &&
-                this._render3BmpTmp != null &&
-                this._backBmp != null &&
-                this._render1Bmp != null &&
-                this._render2Bmp != null &&
-                this._render3Bmp != null)
-            {
-                this._backBmpTmp.UnlockBits(this._backBmpData);
-                this._render1BmpTmp.UnlockBits(this._render1BmpData);
-                this._render2BmpTmp.UnlockBits(this._render2BmpData);
-                this._render3BmpTmp.UnlockBits(this._render3BmpData);
-                this._backBmpTmp.Dispose();
-                this._render1BmpTmp.Dispose();
-                this._render2BmpTmp.Dispose();
-                this._render3BmpTmp.Dispose();
-                this._backBmp.Dispose();
-                this._render1Bmp.Dispose();
-                this._render2Bmp.Dispose();
-                this._render3Bmp.Dispose();
-            }
-            Marshal.FreeHGlobal(this.mem);
-        }
-
         #region 仮
         private static Point GetCursorPosition()
         {
